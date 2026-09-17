@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Add Customer - Optical Billing{% endblock %}
+{% block page_heading %}Add Customer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+
+<div class="min-h-screen">
+
+
+    <!-- HEADER -->
+
+    <header class="bg-white border-b border-slate-200">
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6">
+
+            <div class="h-16 flex items-center justify-between">
+
+                <div class="flex items-center gap-3">
+
+                    <div
+                        class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold"
+                    >
+                        OB
+                    </div>
+
+                    <div>
+
+                        <h1 class="font-bold text-slate-900">
+                            Add Customer
+                        </h1>
+
+                        <p class="text-xs text-slate-500">
+                            Optical Billing System
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <a
+                    href="{% url 'new_bill' %}"
+                    class="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold hover:bg-slate-50 transition"
+                >
+                    ← Back to Bill
+                </a>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- MAIN -->
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+
+
+        {% if error %}
+
+        <div
+            class="mb-5 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+        >
+            {{ error }}
+        </div>
+
+        {% endif %}
+
+
+
+        <div
+            class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        >
+
+
+            <!-- TITLE -->
+
+            <div class="p-6 sm:p-8 border-b border-slate-100">
+
+                <div class="flex items-start gap-4">
+
+                    <div
+                        class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl"
+                    >
+                        👤
+                    </div>
+
+                    <div>
+
+                        <h2 class="text-xl font-bold text-slate-900">
+                            Customer Information
+                        </h2>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Add a customer to your optical shop database.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- FORM -->
+
+            <form method="POST" class="p-6 sm:p-8">
+
+                {% csrf_token %}
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+
+                    <!-- NAME -->
+
+                    <div class="md:col-span-2">
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Customer Name
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            name="name"
+                            required
+                            placeholder="Enter customer name"
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3 focus:border-blue-500"
+                        >
+
+                    </div>
+
+
+
+                    <!-- MOBILE -->
+
+                    <div>
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Mobile Number
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <input
+                            type="tel"
+                            name="mobile"
+                            required
+                            placeholder="Enter mobile number"
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3 focus:border-blue-500"
+                        >
+
+                    </div>
+
+
+
+                    <!-- EMAIL -->
+
+                    <div>
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            name="email"
+                            placeholder="customer@example.com"
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3 focus:border-blue-500"
+                        >
+
+                    </div>
+
+
+
+                    <!-- ADDRESS -->
+
+                    <div class="md:col-span-2">
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Address
+                        </label>
+
+                        <textarea
+                            name="address"
+                            rows="4"
+                            placeholder="Enter customer address"
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3 focus:border-blue-500"
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- ACTIONS -->
+
+                <div
+                    class="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-3 sm:justify-end"
+                >
+
+                    <a
+                        href="{% url 'new_bill' %}"
+                        class="px-6 py-3 rounded-xl border border-slate-200 font-semibold text-center hover:bg-slate-50 transition"
+                    >
+                        Cancel
+                    </a>
+
+
+                    <button
+                        type="submit"
+                        class="px-7 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+                    >
+                        Save Customer
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+</div>
+{% endblock %}

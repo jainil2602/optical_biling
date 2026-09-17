@@ -1,0 +1,798 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+    {{ customer.name }} - Optical Billing
+{% endblock %}
+
+
+{% block page_heading %}
+    Customer Details
+{% endblock %}
+
+
+{% block content %}
+
+<div class="max-w-7xl mx-auto">
+
+
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
+
+    <div
+        class="
+            flex
+            flex-col
+            gap-4
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+        "
+    >
+
+        <div>
+
+            <p class="text-sm font-medium text-blue-600">
+                Customer Management
+            </p>
+
+            <h1
+                class="
+                    mt-1
+                    text-2xl
+                    sm:text-3xl
+                    font-bold
+                    text-slate-900
+                "
+            >
+                Customer Details
+            </h1>
+
+            <p class="mt-1 text-sm text-slate-500">
+                View customer information and purchase history.
+            </p>
+
+        </div>
+
+
+        <a
+            href="{% url 'customer_list' %}"
+
+            class="
+                inline-flex
+                items-center
+                justify-center
+                rounded-xl
+                border
+                border-slate-200
+                bg-white
+                px-5
+                py-3
+                text-sm
+                font-semibold
+                text-slate-700
+                hover:bg-slate-50
+                hover:border-slate-300
+                transition
+            "
+        >
+            ← Back to Customers
+        </a>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- CUSTOMER PROFILE -->
+    <!-- ================================================= -->
+
+    <div
+        class="
+            mt-6
+            rounded-2xl
+            bg-white
+            border
+            border-slate-200
+            shadow-sm
+            overflow-hidden
+        "
+    >
+
+        <div class="p-5 sm:p-6">
+
+            <div
+                class="
+                    flex
+                    flex-col
+                    sm:flex-row
+                    sm:items-center
+                    gap-5
+                "
+            >
+
+                <!-- Avatar -->
+
+                <div
+                    class="
+                        h-20
+                        w-20
+                        rounded-2xl
+                        bg-blue-100
+                        flex
+                        items-center
+                        justify-center
+                        text-3xl
+                        font-bold
+                        text-blue-700
+                        shrink-0
+                    "
+                >
+                    {{ customer.name|first|upper }}
+                </div>
+
+
+                <!-- Information -->
+
+                <div class="flex-1 min-w-0">
+
+                    <div
+                        class="
+                            flex
+                            flex-wrap
+                            items-center
+                            gap-3
+                        "
+                    >
+
+                        <h2
+                            class="
+                                text-2xl
+                                font-bold
+                                text-slate-900
+                            "
+                        >
+                            {{ customer.name }}
+                        </h2>
+
+
+                        <span
+                            class="
+                                rounded-full
+                                bg-blue-50
+                                px-3
+                                py-1
+                                text-xs
+                                font-semibold
+                                text-blue-700
+                            "
+                        >
+                            Customer #{{ customer.id }}
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="
+                            mt-3
+                            flex
+                            flex-col
+                            sm:flex-row
+                            sm:flex-wrap
+                            gap-3
+                            sm:gap-6
+                        "
+                    >
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                gap-2
+                                text-sm
+                                text-slate-600
+                            "
+                        >
+                            📱
+
+                            <span>
+                                {{ customer.mobile }}
+                            </span>
+
+                        </div>
+
+
+                        {% if customer.email %}
+
+                        <div
+                            class="
+                                flex
+                                items-center
+                                gap-2
+                                text-sm
+                                text-slate-600
+                            "
+                        >
+                            ✉️
+
+                            <span class="break-all">
+                                {{ customer.email }}
+                            </span>
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    {% if customer.address %}
+
+                    <div
+                        class="
+                            mt-3
+                            flex
+                            items-start
+                            gap-2
+                            text-sm
+                            text-slate-600
+                        "
+                    >
+                        📍
+
+                        <span>
+                            {{ customer.address }}
+                        </span>
+
+                    </div>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- STATISTICS -->
+    <!-- ================================================= -->
+
+    <div
+        class="
+            mt-6
+            grid
+            grid-cols-1
+            sm:grid-cols-3
+            gap-4
+        "
+    >
+
+
+        <!-- TOTAL BILLS -->
+
+        <div
+            class="
+                rounded-2xl
+                bg-white
+                border
+                border-slate-200
+                p-5
+                shadow-sm
+            "
+        >
+
+            <p class="text-sm text-slate-500">
+                Total Bills
+            </p>
+
+            <p
+                class="
+                    mt-2
+                    text-3xl
+                    font-bold
+                    text-slate-900
+                "
+            >
+                {{ total_bills }}
+            </p>
+
+            <p class="mt-1 text-xs text-slate-400">
+                Purchase transactions
+            </p>
+
+        </div>
+
+
+        <!-- PURCHASES -->
+
+        <div
+            class="
+                rounded-2xl
+                bg-white
+                border
+                border-slate-200
+                p-5
+                shadow-sm
+            "
+        >
+
+            <p class="text-sm text-slate-500">
+                Total Purchases
+            </p>
+
+            <p
+                class="
+                    mt-2
+                    text-3xl
+                    font-bold
+                    text-slate-900
+                "
+            >
+                ₹{{ total_purchases|floatformat:2 }}
+            </p>
+
+            <p class="mt-1 text-xs text-slate-400">
+                Lifetime purchase value
+            </p>
+
+        </div>
+
+
+        <!-- PENDING -->
+
+        <div
+            class="
+                rounded-2xl
+                bg-white
+                border
+                border-slate-200
+                p-5
+                shadow-sm
+            "
+        >
+
+            <p class="text-sm text-slate-500">
+                Pending Amount
+            </p>
+
+            <p
+                class="
+                    mt-2
+                    text-3xl
+                    font-bold
+                    text-orange-600
+                "
+            >
+                ₹{{ pending_amount|floatformat:2 }}
+            </p>
+
+            <p class="mt-1 text-xs text-slate-400">
+                Amount to be collected
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- BILL HISTORY -->
+    <!-- ================================================= -->
+
+    <div
+        class="
+            mt-6
+            rounded-2xl
+            bg-white
+            border
+            border-slate-200
+            shadow-sm
+            overflow-hidden
+        "
+    >
+
+        <div
+            class="
+                px-5
+                py-4
+                sm:px-6
+                border-b
+                border-slate-200
+                flex
+                items-center
+                justify-between
+            "
+        >
+
+            <div>
+
+                <h2 class="font-semibold text-slate-900">
+                    Bill History
+                </h2>
+
+                <p class="mt-1 text-sm text-slate-500">
+                    All bills created for this customer.
+                </p>
+
+            </div>
+
+
+            <span
+                class="
+                    hidden
+                    sm:inline-flex
+                    rounded-full
+                    bg-blue-50
+                    px-3
+                    py-1.5
+                    text-xs
+                    font-semibold
+                    text-blue-700
+                "
+            >
+                {{ total_bills }} Bills
+            </span>
+
+        </div>
+
+
+        {% if bills %}
+
+
+        <!-- DESKTOP -->
+
+        <div class="hidden md:block overflow-x-auto">
+
+            <table class="w-full">
+
+                <thead class="bg-slate-50">
+
+                    <tr>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Bill Number
+                        </th>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Date
+                        </th>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Items
+                        </th>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Total
+                        </th>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Paid
+                        </th>
+
+                        <th class="px-5 py-4 text-left text-xs font-semibold text-slate-500 uppercase">
+                            Balance
+                        </th>
+
+                        <th class="px-5 py-4 text-right text-xs font-semibold text-slate-500 uppercase">
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody class="divide-y divide-slate-100">
+
+                    {% for bill in bills %}
+
+                    <tr class="hover:bg-blue-50/40 transition">
+
+
+                        <td class="px-5 py-4">
+
+                            <p class="font-semibold text-blue-600">
+                                {{ bill.bill_number }}
+                            </p>
+
+                        </td>
+
+
+                        <td class="px-5 py-4 text-sm text-slate-600">
+
+                            {{ bill.bill_date|date:"d M Y" }}
+
+                            <p class="text-xs text-slate-400">
+                                {{ bill.bill_date|date:"h:i A" }}
+                            </p>
+
+                        </td>
+
+
+                        <td class="px-5 py-4 text-sm text-slate-600">
+
+                            {{ bill.items.count }}
+                            item{{ bill.items.count|pluralize }}
+
+                        </td>
+
+
+                        <td class="px-5 py-4 text-sm font-semibold text-slate-900">
+
+                            ₹{{ bill.grand_total|floatformat:2 }}
+
+                        </td>
+
+
+                        <td class="px-5 py-4 text-sm text-green-600">
+
+                            ₹{{ bill.advance_payment|floatformat:2 }}
+
+                        </td>
+
+
+                        <td class="px-5 py-4">
+
+                            {% if bill.remaining_amount > 0 %}
+
+                                <span class="font-semibold text-orange-600">
+                                    ₹{{ bill.remaining_amount|floatformat:2 }}
+                                </span>
+
+                            {% else %}
+
+                                <span class="font-semibold text-green-600">
+                                    Paid
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+
+                        <td class="px-5 py-4 text-right">
+
+                            <a
+                                href="{% url 'bill_detail' bill.id %}"
+
+                                class="
+                                    inline-flex
+                                    items-center
+                                    justify-center
+                                    gap-2
+                                    rounded-lg
+                                    bg-gradient-to-r
+                                    from-indigo-500
+                                    to-blue-600
+                                    px-4
+                                    py-2
+                                    text-sm
+                                    font-semibold
+                                    text-white
+                                    hover:from-indigo-600
+                                    hover:to-blue-700
+                                    transition
+                                "
+                            >
+                                👁 View
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- MOBILE -->
+
+        <div
+            class="
+                md:hidden
+                divide-y
+                divide-slate-100
+            "
+        >
+
+            {% for bill in bills %}
+
+            <div class="p-4">
+
+                <div
+                    class="
+                        flex
+                        items-start
+                        justify-between
+                        gap-3
+                    "
+                >
+
+                    <div>
+
+                        <p class="font-semibold text-blue-600">
+                            {{ bill.bill_number }}
+                        </p>
+
+                        <p class="mt-1 text-xs text-slate-400">
+                            {{ bill.bill_date|date:"d M Y, h:i A" }}
+                        </p>
+
+                    </div>
+
+
+                    <a
+                        href="{% url 'bill_detail' bill.id %}"
+
+                        class="
+                            inline-flex
+                            items-center
+                            gap-1
+                            rounded-lg
+                            bg-gradient-to-r
+                            from-indigo-500
+                            to-blue-600
+                            px-3
+                            py-2
+                            text-sm
+                            font-semibold
+                            text-white
+                        "
+                    >
+                        👁 View
+                    </a>
+
+                </div>
+
+
+                <div
+                    class="
+                        mt-4
+                        grid
+                        grid-cols-2
+                        gap-3
+                    "
+                >
+
+                    <div class="rounded-xl bg-slate-50 p-3">
+
+                        <p class="text-xs text-slate-500">
+                            Items
+                        </p>
+
+                        <p class="mt-1 font-semibold">
+                            {{ bill.items.count }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="rounded-xl bg-slate-50 p-3">
+
+                        <p class="text-xs text-slate-500">
+                            Total
+                        </p>
+
+                        <p class="mt-1 font-semibold">
+                            ₹{{ bill.grand_total|floatformat:2 }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="rounded-xl bg-green-50 p-3">
+
+                        <p class="text-xs text-green-700">
+                            Paid
+                        </p>
+
+                        <p class="mt-1 font-semibold text-green-700">
+                            ₹{{ bill.advance_payment|floatformat:2 }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="rounded-xl bg-orange-50 p-3">
+
+                        <p class="text-xs text-orange-700">
+                            Balance
+                        </p>
+
+                        <p class="mt-1 font-semibold text-orange-700">
+
+                            {% if bill.remaining_amount > 0 %}
+
+                                ₹{{ bill.remaining_amount|floatformat:2 }}
+
+                            {% else %}
+
+                                Paid
+
+                            {% endif %}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+
+        {% else %}
+
+
+        <!-- EMPTY -->
+
+        <div class="px-6 py-16 text-center">
+
+            <div
+                class="
+                    mx-auto
+                    h-16
+                    w-16
+                    rounded-full
+                    bg-blue-50
+                    flex
+                    items-center
+                    justify-center
+                    text-2xl
+                "
+            >
+                🧾
+            </div>
+
+            <h3
+                class="
+                    mt-4
+                    text-lg
+                    font-semibold
+                    text-slate-900
+                "
+            >
+                No bills yet
+            </h3>
+
+            <p class="mt-2 text-sm text-slate-500">
+                This customer does not have any bills yet.
+            </p>
+
+        </div>
+
+
+        {% endif %}
+
+    </div>
+
+
+    <p
+        class="
+            py-6
+            text-center
+            text-xs
+            text-slate-400
+        "
+    >
+        Customer since
+        {{ customer.created_at|date:"d M Y" }}
+    </p>
+
+
+</div>
+
+{% endblock %}

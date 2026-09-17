@@ -1,0 +1,1944 @@
+{% extends "base.html" %}
+
+{% block title %}
+Payments | Optical Billing
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-card {
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
+    }
+
+    .payment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    .table-scroll::-webkit-scrollbar {
+        height: 7px;
+    }
+
+    .table-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+    }
+
+    .custom-date-panel {
+        animation: customDateIn 0.2s ease-out;
+    }
+
+    @keyframes customDateIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="space-y-6 pb-8">
+
+    <!-- ===================================================== -->
+    <!-- PAGE HEADER -->
+    <!-- ===================================================== -->
+
+    <section>
+
+        <!-- IMPORTANT:
+             xl:items-start keeps Payments title at the top
+             even when Custom Date panel becomes taller.
+        -->
+
+        <div
+            class="
+                flex
+                flex-col
+                xl:flex-row
+                xl:items-start
+                xl:justify-between
+                gap-5
+            "
+        >
+
+            <!-- ================================================= -->
+            <!-- PAGE TITLE -->
+            <!-- ================================================= -->
+
+            <div class="shrink-0">
+
+                <div class="flex items-center gap-3">
+
+                    <div
+                        class="
+                            w-11
+                            h-11
+                            rounded-2xl
+                            bg-blue-50
+                            flex
+                            items-center
+                            justify-center
+                            text-2xl
+                        "
+                    >
+                        ₹
+                    </div>
+
+                    <div>
+
+                        <p
+                            class="
+                                text-xs
+                                font-bold
+                                uppercase
+                                tracking-[0.16em]
+                                text-blue-600
+                            "
+                        >
+                            Financial Overview
+                        </p>
+
+                        <h1
+                            class="
+                                text-2xl
+                                sm:text-3xl
+                                font-black
+                                text-slate-900
+                                mt-1
+                            "
+                        >
+                            Payments
+                        </h1>
+
+                    </div>
+
+                </div>
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-3
+                    "
+                >
+                    Track every payment received for your bills.
+                </p>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- FILTER AREA -->
+            <!-- ================================================= -->
+
+            <form
+                method="GET"
+                action="{% url 'payment_history' %}"
+                id="paymentFilterForm"
+                class="
+                    w-full
+                    xl:max-w-[980px]
+                "
+            >
+
+                <!-- FILTER ROW -->
+
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        sm:grid-cols-2
+                        lg:grid-cols-[1fr_1fr_1fr_auto_auto]
+                        gap-3
+                        items-end
+                    "
+                >
+
+                    <!-- VIEW PERIOD -->
+
+                    <div>
+
+                        <label
+                            for="period"
+                            class="
+                                block
+                                text-xs
+                                font-bold
+                                text-slate-500
+                                mb-2
+                            "
+                        >
+                            View period
+                        </label>
+
+                        <select
+                            id="period"
+                            name="period"
+                            class="
+                                w-full
+                                px-4
+                                py-3
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-white
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                                outline-none
+                                focus:ring-4
+                                focus:ring-blue-100
+                                focus:border-blue-400
+                            "
+                        >
+
+                            <option
+                                value="today"
+                                {% if period == "today" %}selected{% endif %}
+                            >
+                                Today
+                            </option>
+
+                            <option
+                                value="week"
+                                {% if period == "week" %}selected{% endif %}
+                            >
+                                This Week
+                            </option>
+
+                            <option
+                                value="month"
+                                {% if period == "month" %}selected{% endif %}
+                            >
+                                This Month
+                            </option>
+
+                            <option
+                                value="year"
+                                {% if period == "year" %}selected{% endif %}
+                            >
+                                This Year
+                            </option>
+
+                            <option
+                                value="all"
+                                {% if period == "all" %}selected{% endif %}
+                            >
+                                All Time
+                            </option>
+
+                            <option
+                                value="custom"
+                                {% if period == "custom" %}selected{% endif %}
+                            >
+                                Custom Date
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- SEARCH -->
+
+                    <div>
+
+                        <label
+                            for="search"
+                            class="
+                                block
+                                text-xs
+                                font-bold
+                                text-slate-500
+                                mb-2
+                            "
+                        >
+                            Search
+                        </label>
+
+                        <input
+                            type="text"
+                            id="search"
+                            name="search"
+                            value="{{ search }}"
+                            placeholder="Customer, mobile or bill..."
+                            class="
+                                w-full
+                                px-4
+                                py-3
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-white
+                                text-sm
+                                font-medium
+                                text-slate-700
+                                placeholder:text-slate-400
+                                outline-none
+                                focus:ring-4
+                                focus:ring-blue-100
+                                focus:border-blue-400
+                            "
+                        >
+
+                    </div>
+
+
+                    <!-- PAYMENT TYPE -->
+
+                    <div>
+
+                        <label
+                            for="payment_type"
+                            class="
+                                block
+                                text-xs
+                                font-bold
+                                text-slate-500
+                                mb-2
+                            "
+                        >
+                            Payment Type
+                        </label>
+
+                        <select
+                            id="payment_type"
+                            name="payment_type"
+                            class="
+                                w-full
+                                px-4
+                                py-3
+                                rounded-xl
+                                border
+                                border-slate-200
+                                bg-white
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                                outline-none
+                                focus:ring-4
+                                focus:ring-blue-100
+                                focus:border-blue-400
+                            "
+                        >
+
+                            <option
+                                value=""
+                                {% if not payment_type %}selected{% endif %}
+                            >
+                                All Payments
+                            </option>
+
+                            <option
+                                value="cash"
+                                {% if payment_type == "cash" %}selected{% endif %}
+                            >
+                                Cash
+                            </option>
+
+                            <option
+                                value="upi"
+                                {% if payment_type == "upi" %}selected{% endif %}
+                            >
+                                UPI
+                            </option>
+
+                            <option
+                                value="card"
+                                {% if payment_type == "card" %}selected{% endif %}
+                            >
+                                Card
+                            </option>
+
+                            <option
+                                value="other"
+                                {% if payment_type == "other" %}selected{% endif %}
+                            >
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- APPLY -->
+
+                    <button
+                        type="submit"
+                        class="
+                            w-full
+                            lg:w-auto
+                            px-6
+                            py-3
+                            rounded-xl
+                            bg-slate-900
+                            text-white
+                            text-sm
+                            font-bold
+                            hover:bg-blue-700
+                            transition
+                            shadow-sm
+                            whitespace-nowrap
+                        "
+                    >
+                        Apply Filters
+                    </button>
+
+
+                    <!-- CLEAR -->
+
+                    <a
+                        href="{% url 'payment_history' %}"
+                        class="
+                            w-full
+                            lg:w-auto
+                            px-5
+                            py-3
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            text-slate-700
+                            text-sm
+                            font-semibold
+                            text-center
+                            hover:bg-slate-50
+                            transition
+                            whitespace-nowrap
+                        "
+                    >
+                        Clear
+                    </a>
+
+                </div>
+
+
+                <!-- ================================================= -->
+                <!-- CUSTOM DATE PANEL -->
+                <!-- ================================================= -->
+
+                <div
+                    id="customDateBox"
+                    class="
+                        custom-date-panel
+                        mt-4
+                        rounded-2xl
+                        border
+                        border-blue-100
+                        bg-blue-50/50
+                        p-4
+                        sm:p-5
+                        {% if period != 'custom' %}hidden{% endif %}
+                    "
+                >
+
+                    <!-- PANEL HEADER -->
+
+                    <div
+                        class="
+                            flex
+                            items-center
+                            gap-3
+                            mb-5
+                        "
+                    >
+
+                        <div
+                            class="
+                                w-10
+                                h-10
+                                rounded-xl
+                                bg-white
+                                border
+                                border-blue-100
+                                flex
+                                items-center
+                                justify-center
+                                text-lg
+                                shrink-0
+                            "
+                        >
+                            📅
+                        </div>
+
+                        <div>
+
+                            <h3
+                                class="
+                                    text-sm
+                                    font-black
+                                    text-slate-800
+                                "
+                            >
+                                Select Date Range
+                            </h3>
+
+                            <p
+                                class="
+                                    text-xs
+                                    text-slate-500
+                                    mt-1
+                                "
+                            >
+                                Choose the start and end date for payment records.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- DATE FIELDS -->
+
+                    <div
+                        class="
+                            grid
+                            grid-cols-1
+                            md:grid-cols-2
+                            gap-4
+                        "
+                    >
+
+                        <!-- FROM DATE -->
+
+                        <div>
+
+                            <label
+                                for="from_date"
+                                class="
+                                    block
+                                    text-xs
+                                    font-bold
+                                    text-slate-600
+                                    mb-2
+                                "
+                            >
+                                From Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="from_date"
+                                name="from_date"
+                                value="{{ from_date }}"
+                                class="
+                                    w-full
+                                    px-4
+                                    py-3
+                                    rounded-xl
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    text-sm
+                                    font-semibold
+                                    text-slate-700
+                                    outline-none
+                                    focus:ring-4
+                                    focus:ring-blue-100
+                                    focus:border-blue-400
+                                "
+                            >
+
+                        </div>
+
+
+                        <!-- TO DATE -->
+
+                        <div>
+
+                            <label
+                                for="to_date"
+                                class="
+                                    block
+                                    text-xs
+                                    font-bold
+                                    text-slate-600
+                                    mb-2
+                                "
+                            >
+                                To Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="to_date"
+                                name="to_date"
+                                value="{{ to_date }}"
+                                class="
+                                    w-full
+                                    px-4
+                                    py-3
+                                    rounded-xl
+                                    border
+                                    border-slate-200
+                                    bg-white
+                                    text-sm
+                                    font-semibold
+                                    text-slate-700
+                                    outline-none
+                                    focus:ring-4
+                                    focus:ring-blue-100
+                                    focus:border-blue-400
+                                "
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- INFORMATION -->
+
+                    <div
+                        class="
+                            flex
+                            items-start
+                            gap-2
+                            mt-4
+                            text-xs
+                            text-blue-700
+                        "
+                    >
+
+                        <span class="mt-0.5">
+                            ℹ️
+                        </span>
+
+                        <span>
+                            Select both dates and click
+                            <strong>Apply Filters</strong>
+                            to view payments for this range.
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- PERIOD INFORMATION -->
+    <!-- ===================================================== -->
+
+    <div
+        class="
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-2
+            px-1
+        "
+    >
+
+        <div>
+
+            <p
+                class="
+                    text-sm
+                    font-bold
+                    text-slate-800
+                "
+            >
+                {{ period_label }} payments
+            </p>
+
+            <p
+                class="
+                    text-xs
+                    text-slate-500
+                    mt-1
+                "
+            >
+                {{ range_text }}
+            </p>
+
+        </div>
+
+
+        <div
+            class="
+                text-xs
+                font-semibold
+                text-slate-500
+                bg-white
+                border
+                border-slate-200
+                px-3
+                py-2
+                rounded-full
+                w-fit
+            "
+        >
+            {{ transaction_count }}
+            transaction{{ transaction_count|pluralize }}
+        </div>
+
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- PAYMENT METHOD CARDS -->
+    <!-- ===================================================== -->
+
+    <section
+        class="
+            grid
+            grid-cols-1
+            sm:grid-cols-2
+            xl:grid-cols-4
+            gap-4
+        "
+    >
+
+        <!-- CASH -->
+
+        <div
+            class="
+                payment-card
+                bg-white
+                border
+                border-slate-200
+                rounded-2xl
+                p-5
+                shadow-sm
+            "
+        >
+
+            <div
+                class="
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div
+                    class="
+                        w-11
+                        h-11
+                        rounded-xl
+                        bg-emerald-50
+                        flex
+                        items-center
+                        justify-center
+                        text-lg
+                        font-black
+                        text-emerald-600
+                    "
+                >
+                    ₹
+                </div>
+
+                <span
+                    class="
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-slate-400
+                    "
+                >
+                    Cash
+                </span>
+
+            </div>
+
+            <p
+                class="
+                    text-xs
+                    font-semibold
+                    text-slate-500
+                    mt-5
+                "
+            >
+                Cash collected
+            </p>
+
+            <h2
+                class="
+                    text-2xl
+                    sm:text-3xl
+                    font-black
+                    text-slate-900
+                    mt-1
+                "
+            >
+                ₹{{ cash_total|floatformat:2 }}
+            </h2>
+
+        </div>
+
+
+        <!-- UPI -->
+
+        <div
+            class="
+                payment-card
+                bg-white
+                border
+                border-slate-200
+                rounded-2xl
+                p-5
+                shadow-sm
+            "
+        >
+
+            <div
+                class="
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div
+                    class="
+                        w-11
+                        h-11
+                        rounded-xl
+                        bg-violet-50
+                        flex
+                        items-center
+                        justify-center
+                        text-lg
+                        font-black
+                        text-violet-600
+                    "
+                >
+                    U
+                </div>
+
+                <span
+                    class="
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-slate-400
+                    "
+                >
+                    UPI
+                </span>
+
+            </div>
+
+            <p
+                class="
+                    text-xs
+                    font-semibold
+                    text-slate-500
+                    mt-5
+                "
+            >
+                UPI collected
+            </p>
+
+            <h2
+                class="
+                    text-2xl
+                    sm:text-3xl
+                    font-black
+                    text-slate-900
+                    mt-1
+                "
+            >
+                ₹{{ upi_total|floatformat:2 }}
+            </h2>
+
+        </div>
+
+
+        <!-- CARD -->
+
+        <div
+            class="
+                payment-card
+                bg-white
+                border
+                border-slate-200
+                rounded-2xl
+                p-5
+                shadow-sm
+            "
+        >
+
+            <div
+                class="
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div
+                    class="
+                        w-11
+                        h-11
+                        rounded-xl
+                        bg-blue-50
+                        flex
+                        items-center
+                        justify-center
+                        text-lg
+                        font-black
+                        text-blue-600
+                    "
+                >
+                    C
+                </div>
+
+                <span
+                    class="
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-slate-400
+                    "
+                >
+                    Card
+                </span>
+
+            </div>
+
+            <p
+                class="
+                    text-xs
+                    font-semibold
+                    text-slate-500
+                    mt-5
+                "
+            >
+                Card collected
+            </p>
+
+            <h2
+                class="
+                    text-2xl
+                    sm:text-3xl
+                    font-black
+                    text-slate-900
+                    mt-1
+                "
+            >
+                ₹{{ card_total|floatformat:2 }}
+            </h2>
+
+        </div>
+
+
+        <!-- OTHER -->
+
+        <div
+            class="
+                payment-card
+                bg-white
+                border
+                border-slate-200
+                rounded-2xl
+                p-5
+                shadow-sm
+            "
+        >
+
+            <div
+                class="
+                    flex
+                    items-center
+                    justify-between
+                "
+            >
+
+                <div
+                    class="
+                        w-11
+                        h-11
+                        rounded-xl
+                        bg-amber-50
+                        flex
+                        items-center
+                        justify-center
+                        text-lg
+                        font-black
+                        text-amber-600
+                    "
+                >
+                    +
+                </div>
+
+                <span
+                    class="
+                        text-xs
+                        font-bold
+                        uppercase
+                        tracking-wider
+                        text-slate-400
+                    "
+                >
+                    Other
+                </span>
+
+            </div>
+
+            <p
+                class="
+                    text-xs
+                    font-semibold
+                    text-slate-500
+                    mt-5
+                "
+            >
+                Other payments
+            </p>
+
+            <h2
+                class="
+                    text-2xl
+                    sm:text-3xl
+                    font-black
+                    text-slate-900
+                    mt-1
+                "
+            >
+                ₹{{ other_total|floatformat:2 }}
+            </h2>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- TOTAL COLLECTED -->
+    <!-- ===================================================== -->
+
+    <section
+        class="
+            rounded-2xl
+            bg-gradient-to-r
+            from-slate-900
+            via-blue-950
+            to-blue-900
+            text-white
+            p-5
+            sm:p-6
+            shadow-xl
+        "
+    >
+
+        <div
+            class="
+                flex
+                flex-col
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+                gap-4
+            "
+        >
+
+            <div>
+
+                <p
+                    class="
+                        text-xs
+                        uppercase
+                        tracking-[0.18em]
+                        text-blue-200
+                        font-bold
+                    "
+                >
+                    Total collected
+                </p>
+
+                <h2
+                    class="
+                        text-3xl
+                        sm:text-4xl
+                        font-black
+                        mt-2
+                    "
+                >
+                    ₹{{ total_collected|floatformat:2 }}
+                </h2>
+
+                <p
+                    class="
+                        text-sm
+                        text-blue-100/80
+                        mt-2
+                    "
+                >
+                    Money received during
+                    {{ period_label|lower }}.
+                </p>
+
+            </div>
+
+
+            <div
+                class="
+                    w-14
+                    h-14
+                    rounded-2xl
+                    bg-white/10
+                    border
+                    border-white/10
+                    flex
+                    items-center
+                    justify-center
+                    text-2xl
+                "
+            >
+                ✓
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- TRANSACTIONS -->
+    <!-- ===================================================== -->
+
+    <section
+        class="
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            shadow-sm
+            overflow-hidden
+        "
+    >
+
+        <!-- HEADER -->
+
+        <div
+            class="
+                px-5
+                sm:px-6
+                py-5
+                border-b
+                border-slate-100
+                flex
+                flex-col
+                sm:flex-row
+                sm:items-center
+                sm:justify-between
+                gap-2
+            "
+        >
+
+            <div>
+
+                <h2
+                    class="
+                        text-lg
+                        font-black
+                        text-slate-900
+                    "
+                >
+                    All Payment Transactions
+                </h2>
+
+                <p
+                    class="
+                        text-xs
+                        text-slate-500
+                        mt-1
+                    "
+                >
+                    Customer-wise payment records linked directly to their bills.
+                </p>
+
+            </div>
+
+
+            <span
+                class="
+                    text-xs
+                    font-bold
+                    text-slate-500
+                "
+            >
+                {{ transaction_count }}
+                record{{ transaction_count|pluralize }}
+            </span>
+
+        </div>
+
+
+        {% if payments %}
+
+            <!-- ================================================= -->
+            <!-- DESKTOP TABLE -->
+            <!-- ================================================= -->
+
+            <div
+                class="
+                    hidden
+                    lg:block
+                    overflow-x-auto
+                    table-scroll
+                "
+            >
+
+                <table
+                    class="
+                        w-full
+                        min-w-[920px]
+                        text-left
+                    "
+                >
+
+                    <thead
+                        class="
+                            bg-slate-50
+                            border-b
+                            border-slate-100
+                        "
+                    >
+
+                        <tr>
+
+                            <th
+                                class="
+                                    px-6
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Customer
+                            </th>
+
+                            <th
+                                class="
+                                    px-4
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Mobile
+                            </th>
+
+                            <th
+                                class="
+                                    px-4
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Bill
+                            </th>
+
+                            <th
+                                class="
+                                    px-4
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Payment Type
+                            </th>
+
+                            <th
+                                class="
+                                    px-4
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Amount
+                            </th>
+
+                            <th
+                                class="
+                                    px-4
+                                    py-4
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Date & Time
+                            </th>
+
+                            <th
+                                class="
+                                    px-6
+                                    py-4
+                                    text-right
+                                    text-[11px]
+                                    uppercase
+                                    tracking-wider
+                                    font-black
+                                    text-slate-500
+                                "
+                            >
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody
+                        class="
+                            divide-y
+                            divide-slate-100
+                        "
+                    >
+
+                        {% for payment in payments %}
+
+                        <tr
+                            class="
+                                hover:bg-slate-50/80
+                                transition
+                            "
+                        >
+
+                            <!-- CUSTOMER -->
+
+                            <td class="px-6 py-4">
+
+                                <div
+                                    class="
+                                        font-bold
+                                        text-slate-900
+                                    "
+                                >
+                                    {{ payment.bill.customer.name }}
+                                </div>
+
+                                <div
+                                    class="
+                                        text-xs
+                                        text-slate-400
+                                        mt-1
+                                    "
+                                >
+                                    ID #{{ payment.bill.customer.id }}
+                                </div>
+
+                            </td>
+
+
+                            <!-- MOBILE -->
+
+                            <td
+                                class="
+                                    px-4
+                                    py-4
+                                    text-sm
+                                    font-semibold
+                                    text-slate-600
+                                "
+                            >
+                                {{ payment.bill.customer.mobile }}
+                            </td>
+
+
+                            <!-- BILL -->
+
+                            <td class="px-4 py-4">
+
+                                <span
+                                    class="
+                                        font-bold
+                                        text-slate-800
+                                    "
+                                >
+                                    {{ payment.bill.bill_number }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- PAYMENT TYPE -->
+
+                            <td class="px-4 py-4">
+
+                                <span
+                                    class="
+                                        inline-flex
+                                        items-center
+                                        px-3
+                                        py-1.5
+                                        rounded-full
+                                        text-xs
+                                        font-bold
+                                        bg-blue-50
+                                        text-blue-700
+                                    "
+                                >
+                                    {{ payment.get_payment_method_display }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- AMOUNT -->
+
+                            <td class="px-4 py-4">
+
+                                <span
+                                    class="
+                                        text-base
+                                        font-black
+                                        text-slate-900
+                                    "
+                                >
+                                    ₹{{ payment.amount|floatformat:2 }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- DATE -->
+
+                            <td
+                                class="
+                                    px-4
+                                    py-4
+                                    text-sm
+                                    text-slate-500
+                                "
+                            >
+
+                                {{ payment.payment_date|date:"d M Y" }}
+
+                                <br>
+
+                                <span
+                                    class="
+                                        text-xs
+                                        text-slate-400
+                                    "
+                                >
+                                    {{ payment.payment_date|date:"h:i A" }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- ACTION -->
+
+                            <td
+                                class="
+                                    px-6
+                                    py-4
+                                    text-right
+                                "
+                            >
+
+                                <a
+                                    href="{% url 'bill_detail' payment.bill.id %}"
+                                    class="
+                                        inline-flex
+                                        items-center
+                                        gap-2
+                                        px-4
+                                        py-2
+                                        rounded-xl
+                                        bg-slate-900
+                                        text-white
+                                        text-xs
+                                        font-bold
+                                        hover:bg-blue-700
+                                        transition
+                                    "
+                                >
+                                    View Bill
+                                    <span>→</span>
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- MOBILE / TABLET -->
+            <!-- ================================================= -->
+
+            <div
+                class="
+                    lg:hidden
+                    divide-y
+                    divide-slate-100
+                "
+            >
+
+                {% for payment in payments %}
+
+                <article
+                    class="
+                        p-5
+                        sm:p-6
+                    "
+                >
+
+                    <div
+                        class="
+                            flex
+                            items-start
+                            justify-between
+                            gap-4
+                        "
+                    >
+
+                        <div class="min-w-0">
+
+                            <h3
+                                class="
+                                    font-black
+                                    text-slate-900
+                                    truncate
+                                "
+                            >
+                                {{ payment.bill.customer.name }}
+                            </h3>
+
+                            <p
+                                class="
+                                    text-xs
+                                    text-slate-400
+                                    mt-1
+                                "
+                            >
+                                Customer ID #{{ payment.bill.customer.id }}
+                                ·
+                                {{ payment.bill.customer.mobile }}
+                            </p>
+
+                        </div>
+
+
+                        <span
+                            class="
+                                shrink-0
+                                text-base
+                                font-black
+                                text-slate-900
+                            "
+                        >
+                            ₹{{ payment.amount|floatformat:2 }}
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        class="
+                            grid
+                            grid-cols-2
+                            gap-3
+                            mt-5
+                        "
+                    >
+
+                        <div
+                            class="
+                                rounded-xl
+                                bg-slate-50
+                                p-3
+                            "
+                        >
+
+                            <p
+                                class="
+                                    text-[10px]
+                                    uppercase
+                                    tracking-wider
+                                    font-bold
+                                    text-slate-400
+                                "
+                            >
+                                Payment
+                            </p>
+
+                            <p
+                                class="
+                                    text-sm
+                                    font-bold
+                                    text-blue-700
+                                    mt-1
+                                "
+                            >
+                                {{ payment.get_payment_method_display }}
+                            </p>
+
+                        </div>
+
+
+                        <div
+                            class="
+                                rounded-xl
+                                bg-slate-50
+                                p-3
+                            "
+                        >
+
+                            <p
+                                class="
+                                    text-[10px]
+                                    uppercase
+                                    tracking-wider
+                                    font-bold
+                                    text-slate-400
+                                "
+                            >
+                                Bill
+                            </p>
+
+                            <p
+                                class="
+                                    text-sm
+                                    font-bold
+                                    text-slate-800
+                                    mt-1
+                                    truncate
+                                "
+                            >
+                                {{ payment.bill.bill_number }}
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="
+                            flex
+                            items-center
+                            justify-between
+                            gap-3
+                            mt-4
+                        "
+                    >
+
+                        <p
+                            class="
+                                text-xs
+                                text-slate-500
+                            "
+                        >
+                            {{ payment.payment_date|date:"d M Y, h:i A" }}
+                        </p>
+
+
+                        <a
+                            href="{% url 'bill_detail' payment.bill.id %}"
+                            class="
+                                shrink-0
+                                inline-flex
+                                items-center
+                                gap-2
+                                px-4
+                                py-2.5
+                                rounded-xl
+                                bg-slate-900
+                                text-white
+                                text-xs
+                                font-bold
+                                hover:bg-blue-700
+                                transition
+                            "
+                        >
+                            View Bill
+                            <span>→</span>
+                        </a>
+
+                    </div>
+
+                </article>
+
+                {% endfor %}
+
+            </div>
+
+
+        {% else %}
+
+            <!-- ================================================= -->
+            <!-- EMPTY STATE -->
+            <!-- ================================================= -->
+
+            <div
+                class="
+                    px-6
+                    py-16
+                    text-center
+                "
+            >
+
+                <div
+                    class="
+                        w-16
+                        h-16
+                        mx-auto
+                        rounded-2xl
+                        bg-slate-100
+                        flex
+                        items-center
+                        justify-center
+                        text-2xl
+                    "
+                >
+                    ₹
+                </div>
+
+
+                <h3
+                    class="
+                        text-lg
+                        font-black
+                        text-slate-800
+                        mt-5
+                    "
+                >
+                    No payments found
+                </h3>
+
+
+                <p
+                    class="
+                        text-sm
+                        text-slate-500
+                        mt-2
+                        max-w-md
+                        mx-auto
+                    "
+                >
+                    There are no payment transactions recorded for
+                    {{ period_label|lower }}
+                    yet.
+                </p>
+
+
+                <a
+                    href="{% url 'new_bill' %}"
+                    class="
+                        inline-flex
+                        items-center
+                        gap-2
+                        mt-5
+                        px-5
+                        py-3
+                        rounded-xl
+                        bg-blue-600
+                        text-white
+                        text-sm
+                        font-bold
+                        hover:bg-blue-700
+                        transition
+                    "
+                >
+                    Create New Bill
+                    <span>→</span>
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- CUSTOM DATE JAVASCRIPT -->
+<!-- ========================================================= -->
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const periodSelect = document.getElementById("period");
+    const customDateBox = document.getElementById("customDateBox");
+    const form = document.getElementById("paymentFilterForm");
+    const fromDate = document.getElementById("from_date");
+    const toDate = document.getElementById("to_date");
+
+    if (!periodSelect || !customDateBox || !form) {
+        return;
+    }
+
+
+    /* ========================================================
+       SHOW / HIDE CUSTOM DATE
+       ======================================================== */
+
+    function updateCustomDateVisibility() {
+
+        if (periodSelect.value === "custom") {
+
+            customDateBox.classList.remove("hidden");
+
+        } else {
+
+            customDateBox.classList.add("hidden");
+
+        }
+
+    }
+
+
+    /* Initial page state */
+
+    updateCustomDateVisibility();
+
+
+    /* ========================================================
+       PERIOD CHANGE
+       ======================================================== */
+
+    periodSelect.addEventListener("change", function () {
+
+        /*
+         * CUSTOM DATE:
+         * Do NOT submit the form.
+         * Just open the date selector.
+         */
+
+        if (periodSelect.value === "custom") {
+
+            updateCustomDateVisibility();
+
+            if (fromDate) {
+
+                setTimeout(function () {
+                    fromDate.focus();
+                }, 100);
+
+            }
+
+            return;
+        }
+
+
+        /*
+         * NORMAL PERIOD:
+         * Today / Week / Month / Year / All Time
+         * can submit immediately.
+         */
+
+        form.submit();
+
+    });
+
+
+    /* ========================================================
+       FORM VALIDATION
+       ======================================================== */
+
+    form.addEventListener("submit", function (event) {
+
+        if (periodSelect.value !== "custom") {
+            return;
+        }
+
+
+        /* Both dates required */
+
+        if (!fromDate.value || !toDate.value) {
+
+            event.preventDefault();
+
+            alert(
+                "Please select both From Date and To Date."
+            );
+
+            if (!fromDate.value) {
+
+                fromDate.focus();
+
+            } else {
+
+                toDate.focus();
+
+            }
+
+            return;
+        }
+
+
+        /* From date cannot be after To date */
+
+        if (fromDate.value > toDate.value) {
+
+            event.preventDefault();
+
+            alert(
+                "From Date cannot be later than To Date."
+            );
+
+            fromDate.focus();
+
+            return;
+        }
+
+    });
+
+});
+</script>
+
+{% endblock %}

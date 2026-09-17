@@ -1,0 +1,802 @@
+{% extends "base.html" %}
+
+{% block title %}Shop Setup - Optical Billing{% endblock %}
+{% block page_heading %}Shop Setup{% endblock %}
+
+{% block content %}
+
+<div class="max-w-5xl mx-auto">
+
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
+
+    <div class="mb-6">
+
+        <div class="flex items-center gap-3">
+
+            <div
+                class="
+                    w-11
+                    h-11
+                    rounded-xl
+                    bg-indigo-50
+                    flex
+                    items-center
+                    justify-center
+                    text-xl
+                "
+            >
+                🏪
+            </div>
+
+            <div>
+
+                <h1
+                    class="
+                        text-2xl
+                        sm:text-3xl
+                        font-extrabold
+                        tracking-tight
+                        text-slate-900
+                    "
+                >
+                    Set Up Your Shop
+                </h1>
+
+                <p
+                    class="
+                        mt-1
+                        text-sm
+                        text-slate-500
+                    "
+                >
+                    Add your optical shop information. These details
+                    will automatically appear on your bills.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- INFORMATION BANNER -->
+    <!-- ================================================= -->
+
+    <div
+        class="
+            mb-6
+            rounded-2xl
+            border
+            border-blue-100
+            bg-blue-50
+            px-5
+            py-4
+        "
+    >
+
+        <div class="flex items-start gap-3">
+
+            <div
+                class="
+                    w-9
+                    h-9
+                    rounded-lg
+                    bg-white
+                    flex
+                    items-center
+                    justify-center
+                    shrink-0
+                    shadow-sm
+                "
+            >
+                ℹ️
+            </div>
+
+            <div>
+
+                <p
+                    class="
+                        text-sm
+                        font-bold
+                        text-blue-900
+                    "
+                >
+                    Your shop information
+                </p>
+
+                <p
+                    class="
+                        mt-1
+                        text-xs
+                        sm:text-sm
+                        leading-relaxed
+                        text-blue-700
+                    "
+                >
+                    Enter accurate shop details because this
+                    information will be used automatically when
+                    generating customer bills.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- FORM CARD -->
+    <!-- ================================================= -->
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+    >
+
+        {% csrf_token %}
+
+
+        <div
+            class="
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-sm
+            "
+        >
+
+
+            <!-- ================================================= -->
+            <!-- BASIC INFORMATION -->
+            <!-- ================================================= -->
+
+            <div class="border-b border-slate-200 p-5 sm:p-7">
+
+                <div class="mb-6">
+
+                    <div class="flex items-center gap-3">
+
+                        <div
+                            class="
+                                w-9
+                                h-9
+                                rounded-lg
+                                bg-indigo-50
+                                flex
+                                items-center
+                                justify-center
+                            "
+                        >
+                            🏷️
+                        </div>
+
+                        <div>
+
+                            <h2
+                                class="
+                                    font-bold
+                                    text-slate-900
+                                "
+                            >
+                                Basic Information
+                            </h2>
+
+                            <p
+                                class="
+                                    mt-0.5
+                                    text-xs
+                                    text-slate-500
+                                "
+                            >
+                                Main information about your optical shop
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="
+                        grid
+                        grid-cols-1
+                        md:grid-cols-2
+                        gap-5
+                    "
+                >
+
+                    <!-- Shop Name -->
+
+                    <div class="md:col-span-2">
+
+                        <label
+                            for="{{ form.shop_name.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            Shop Name
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        {{ form.shop_name.as_widget }}
+
+                        {% if form.shop_name.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.shop_name.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Address -->
+
+                    <div class="md:col-span-2">
+
+                        <label
+                            for="{{ form.address.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            Shop Address
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        {{ form.address.as_widget }}
+
+                        {% if form.address.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.address.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- City -->
+
+                    <div>
+
+                        <label
+                            for="{{ form.city.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            City
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        {{ form.city.as_widget }}
+
+                        {% if form.city.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.city.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Phone -->
+
+                    <div>
+
+                        <label
+                            for="{{ form.phone.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            Phone Number
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        {{ form.phone.as_widget }}
+
+                        {% if form.phone.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.phone.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- Email -->
+
+                    <div>
+
+                        <label
+                            for="{{ form.email.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            Email Address
+                            <span
+                                class="
+                                    ml-1
+                                    text-xs
+                                    font-normal
+                                    text-slate-400
+                                "
+                            >
+                                Optional
+                            </span>
+                        </label>
+
+                        {{ form.email.as_widget }}
+
+                        {% if form.email.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.email.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <!-- GST -->
+
+                    <div>
+
+                        <label
+                            for="{{ form.gst_number.id_for_label }}"
+                            class="
+                                block
+                                mb-2
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                            "
+                        >
+                            GST Number
+
+                            <span
+                                class="
+                                    ml-1
+                                    text-xs
+                                    font-normal
+                                    text-slate-400
+                                "
+                            >
+                                Optional
+                            </span>
+                        </label>
+
+                        {{ form.gst_number.as_widget }}
+
+                        {% if form.gst_number.errors %}
+
+                        <p class="mt-1.5 text-xs text-red-600">
+                            {{ form.gst_number.errors.0 }}
+                        </p>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- SHOP LOGO -->
+            <!-- ================================================= -->
+
+            <div class="border-b border-slate-200 p-5 sm:p-7">
+
+                <div class="mb-6">
+
+                    <div class="flex items-center gap-3">
+
+                        <div
+                            class="
+                                w-9
+                                h-9
+                                rounded-lg
+                                bg-violet-50
+                                flex
+                                items-center
+                                justify-center
+                            "
+                        >
+                            🖼️
+                        </div>
+
+                        <div>
+
+                            <h2
+                                class="
+                                    font-bold
+                                    text-slate-900
+                                "
+                            >
+                                Shop Logo
+                            </h2>
+
+                            <p
+                                class="
+                                    mt-0.5
+                                    text-xs
+                                    text-slate-500
+                                "
+                            >
+                                Add your shop logo for professional bills
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    class="
+                        rounded-xl
+                        border
+                        border-dashed
+                        border-slate-300
+                        bg-slate-50
+                        p-5
+                        sm:p-6
+                    "
+                >
+
+                    <label
+                        for="{{ form.logo.id_for_label }}"
+                        class="
+                            block
+                            cursor-pointer
+                        "
+                    >
+
+                        <div
+                            class="
+                                flex
+                                flex-col
+                                sm:flex-row
+                                sm:items-center
+                                gap-4
+                            "
+                        >
+
+                            <div
+                                class="
+                                    w-16
+                                    h-16
+                                    rounded-xl
+                                    bg-white
+                                    border
+                                    border-slate-200
+                                    flex
+                                    items-center
+                                    justify-center
+                                    text-2xl
+                                    shrink-0
+                                "
+                            >
+                                👓
+                            </div>
+
+
+                            <div class="flex-1">
+
+                                <p
+                                    class="
+                                        text-sm
+                                        font-semibold
+                                        text-slate-800
+                                    "
+                                >
+                                    Upload shop logo
+                                </p>
+
+                                <p
+                                    class="
+                                        mt-1
+                                        text-xs
+                                        text-slate-500
+                                    "
+                                >
+                                    Recommended for professional
+                                    invoice printing.
+                                </p>
+
+                                <p
+                                    class="
+                                        mt-1
+                                        text-xs
+                                        text-slate-400
+                                    "
+                                >
+                                    Logo is optional.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="mt-4">
+
+                            {{ form.logo.as_widget }}
+
+                        </div>
+
+                    </label>
+
+
+                    {% if form.logo.errors %}
+
+                    <p class="mt-2 text-xs text-red-600">
+                        {{ form.logo.errors.0 }}
+                    </p>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <!-- ================================================= -->
+            <!-- ACTIONS -->
+            <!-- ================================================= -->
+
+            <div
+                class="
+                    flex
+                    flex-col-reverse
+                    sm:flex-row
+                    sm:items-center
+                    sm:justify-between
+                    gap-3
+                    bg-slate-50
+                    p-5
+                    sm:px-7
+                "
+            >
+
+                <p
+                    class="
+                        text-xs
+                        text-slate-500
+                    "
+                >
+                    <span class="text-red-500">*</span>
+                    Required fields
+                </p>
+
+
+                <button
+                    type="submit"
+
+                    class="
+                        w-full
+                        sm:w-auto
+                        min-h-11
+                        px-6
+                        rounded-xl
+
+                        bg-gradient-to-r
+                        from-indigo-600
+                        to-blue-600
+
+                        text-white
+                        text-sm
+                        font-bold
+
+                        shadow-lg
+                        shadow-indigo-500/15
+
+                        hover:shadow-xl
+                        hover:-translate-y-0.5
+
+                        transition
+                        duration-200
+                    "
+                >
+
+                    <span
+                        class="
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                        "
+                    >
+
+                        <span>Save Shop Details</span>
+
+                        <span>→</span>
+
+                    </span>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- FORM FIELD STYLING -->
+<!-- ========================================================= -->
+
+<style>
+
+    #id_shop_name,
+    #id_address,
+    #id_city,
+    #id_phone,
+    #id_email,
+    #id_gst_number {
+
+        width: 100%;
+
+        border:
+            1px solid
+            rgb(226 232 240);
+
+        background:
+            rgb(248 250 252);
+
+        border-radius:
+            0.75rem;
+
+        padding:
+            0.75rem 1rem;
+
+        font-size:
+            0.875rem;
+
+        color:
+            rgb(15 23 42);
+
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease,
+            background-color 0.2s ease;
+
+    }
+
+
+    #id_shop_name,
+    #id_city,
+    #id_phone,
+    #id_email,
+    #id_gst_number {
+
+        min-height:
+            3rem;
+
+    }
+
+
+    #id_address {
+
+        min-height:
+            6rem;
+
+        resize:
+            vertical;
+
+    }
+
+
+    #id_shop_name:focus,
+    #id_address:focus,
+    #id_city:focus,
+    #id_phone:focus,
+    #id_email:focus,
+    #id_gst_number:focus {
+
+        outline:
+            none;
+
+        border-color:
+            rgb(79 70 229);
+
+        background:
+            white;
+
+        box-shadow:
+            0 0 0 4px
+            rgba(79, 70, 229, 0.10);
+
+    }
+
+
+    #id_logo {
+
+        width: 100%;
+
+        font-size:
+            0.875rem;
+
+        color:
+            rgb(71 85 105);
+
+    }
+
+
+    #id_logo::file-selector-button {
+
+        margin-right:
+            0.75rem;
+
+        padding:
+            0.55rem 0.9rem;
+
+        border:
+            0;
+
+        border-radius:
+            0.65rem;
+
+        background:
+            rgb(238 242 255);
+
+        color:
+            rgb(67 56 202);
+
+        font-weight:
+            600;
+
+        cursor:
+            pointer;
+
+    }
+
+</style>
+
+{% endblock %}

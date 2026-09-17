@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block title %}Bill History - Optical Billing{% endblock %}
+{% block page_heading %}Bill History{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+
+    {% if request.GET.settled %}
+    <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold text-emerald-700">
+        Payment recorded successfully. The bill balance has been updated.
+    </div>
+    {% endif %}
+
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Bill History</h1>
+            <p class="mt-1 text-sm text-slate-500">Search, filter and manage previously created bills.</p>
+        </div>
+        <a href="{% url 'new_bill' %}" class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:from-indigo-600 hover:to-blue-700 transition">+ New Bill</a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Bills Found</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">{{ filtered_count }}</p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Filtered Sales</p>
+            <p class="mt-2 text-2xl font-bold text-slate-900">₹{{ filtered_total|floatformat:2 }}</p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Pending Balance</p>
+            <p class="mt-2 text-2xl font-bold text-orange-600">₹{{ filtered_pending|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <form method="get" class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+            <input type="search" name="q" value="{{ query }}" placeholder="Bill no, customer, mobile" class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+            <input type="date" name="date_from" value="{{ date_from }}" class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+            <input type="date" name="date_to" value="{{ date_to }}" class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none">
+            <select name="payment_method" class="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none">
+                <option value="">All payment methods</option>
+                <option value="cash" {% if payment_method == 'cash' %}selected{% endif %}>Cash</option>
+                <option value="upi" {% if payment_method == 'upi' %}selected{% endif %}>UPI</option>
+                <option value="card" {% if payment_method == 'card' %}selected{% endif %}>Card</option>
+                <option value="other" {% if payment_method == 'other' %}selected{% endif %}>Other</option>
+            </select>
+            <select name="status" class="rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none">
+                <option value="">All statuses</option>
+                <option value="paid" {% if status == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+            </select>
+        </div>
+        <div class="mt-3 flex flex-col sm:flex-row gap-3">
+            <button type="submit" class="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition">Apply Filters</button>
+            <a href="{% url 'bill_history' %}" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50 transition">Clear</a>
+        </div>
+    </form>
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        {% if bills %}
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full min-w-[900px] text-sm">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-slate-500">Bill No.</th>
+                        <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-slate-500">Customer</th>
+                        <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-slate-500">Date</th>
+                        <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-slate-500">Total</th>
+                        <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-slate-500">Balance</th>
+                        <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-slate-500">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for bill in bills %}
+                    <tr class="hover:bg-blue-50/30 transition">
+                        <td class="px-5 py-4 font-semibold text-blue-600">{{ bill.bill_number }}</td>
+                        <td class="px-5 py-4"><div class="font-medium text-slate-900">{{ bill.customer.name }}</div><div class="text-xs text-slate-400">{{ bill.customer.mobile }}</div></td>
+                        <td class="px-5 py-4 text-slate-600">{{ bill.bill_date|date:"d M Y" }}<div class="text-xs text-slate-400">{{ bill.bill_date|date:"h:i A" }}</div></td>
+                        <td class="px-5 py-4 font-semibold">₹{{ bill.grand_total|floatformat:2 }}</td>
+                        <td class="px-5 py-4">
+                            {% if bill.calculated_remaining > 0 %}
+                                <span class="font-semibold text-orange-600">₹{{ bill.calculated_remaining|floatformat:2 }}</span>
+                            {% else %}
+                                <span class="font-semibold text-emerald-600">Paid</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-5 py-4">
+                            <div class="flex justify-end items-center gap-2">
+                                {% if bill.calculated_remaining > 0 %}
+                                <button type="button" data-settle-url="{% url 'settle_payment' bill.id %}" onclick="openSettleModal(this.dataset.settleUrl, '{{ bill.bill_number }}', '{{ bill.customer.name|escapejs }}', '{{ bill.grand_total }}', '{{ bill.advance_payment }}', '{{ bill.calculated_remaining }}')" class="inline-flex rounded-lg bg-orange-50 px-4 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition">Settle</button>
+                                {% endif %}
+                                <a href="{% url 'bill_detail' bill.id %}" class="inline-flex rounded-lg bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition">View Bill →</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="md:hidden divide-y divide-slate-100">
+            {% for bill in bills %}
+            <div class="p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="font-semibold text-blue-600">{{ bill.bill_number }}</p>
+                        <p class="mt-1 text-xs text-slate-400">{{ bill.bill_date|date:"d M Y, h:i A" }}</p>
+                    </div>
+                    {% if bill.calculated_remaining > 0 %}
+                    <button type="button" data-settle-url="{% url 'settle_payment' bill.id %}" onclick="openSettleModal(this.dataset.settleUrl, '{{ bill.bill_number }}', '{{ bill.customer.name|escapejs }}', '{{ bill.grand_total }}', '{{ bill.advance_payment }}', '{{ bill.calculated_remaining }}')" class="rounded-lg bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-700">Settle</button>
+                    {% endif %}
+                </div>
+                <div class="mt-4"><p class="font-medium text-slate-900">{{ bill.customer.name }}</p><p class="text-xs text-slate-500">{{ bill.customer.mobile }}</p></div>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs text-slate-500">Total</p><p class="mt-1 font-semibold">₹{{ bill.grand_total|floatformat:2 }}</p></div>
+                    <div class="rounded-xl bg-slate-50 p-3"><p class="text-xs text-slate-500">Items</p><p class="mt-1 font-semibold">{{ bill.items.count }}</p></div>
+                    <div class="rounded-xl bg-slate-50 p-3 col-span-2"><p class="text-xs text-slate-500">Balance</p><p class="mt-1 font-semibold {% if bill.calculated_remaining > 0 %}text-orange-600{% else %}text-emerald-600{% endif %}">{% if bill.calculated_remaining > 0 %}₹{{ bill.calculated_remaining|floatformat:2 }}{% else %}Paid{% endif %}</p></div>
+                </div>
+                <a href="{% url 'bill_detail' bill.id %}" class="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">View Bill →</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-6 py-16 text-center"><div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-2xl">🧾</div><h3 class="mt-4 text-lg font-semibold">No bills found</h3><p class="mt-2 text-sm text-slate-500">Try different filters or create a new bill.</p></div>
+        {% endif %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4">
+        {% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&date_from={{ date_from }}&date_to={{ date_to }}&payment_method={{ payment_method }}&status={{ status }}&page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">← Previous</a>{% else %}<span></span>{% endif %}
+        <span class="text-sm text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&date_from={{ date_from }}&date_to={{ date_to }}&payment_method={{ payment_method }}&status={{ status }}&page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Next →</a>{% else %}<span></span>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ========================================================= -->
+<!-- SETTLE PAYMENT MODAL -->
+<!-- ========================================================= -->
+<div id="settleModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onclick="closeSettleModal()"></div>
+
+    <div class="relative w-full max-w-md rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 sm:px-6 py-5">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-orange-600">Pending Payment</p>
+                <h2 class="mt-1 text-xl font-bold text-slate-900">Settle Bill</h2>
+                <p id="settleCustomer" class="mt-1 text-sm text-slate-500"></p>
+            </div>
+            <button type="button" onclick="closeSettleModal()" class="h-9 w-9 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 text-xl">×</button>
+        </div>
+
+        <form id="settleForm" method="post" class="p-5 sm:p-6 space-y-5">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-3">
+                <div class="rounded-2xl bg-slate-50 p-4">
+                    <p class="text-xs text-slate-500">Bill Total</p>
+                    <p id="settleTotal" class="mt-1 text-lg font-bold text-slate-900"></p>
+                </div>
+                <div class="rounded-2xl bg-orange-50 p-4">
+                    <p class="text-xs text-orange-600">Pending</p>
+                    <p id="settlePending" class="mt-1 text-lg font-bold text-orange-700"></p>
+                </div>
+            </div>
+
+            <div>
+                <label for="settleAmount" class="block text-sm font-semibold text-slate-800 mb-2">Amount Settled</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-500">₹</span>
+                    <input id="settleAmount" name="amount" type="number" min="0.01" step="0.01" required class="w-full rounded-xl border border-slate-200 pl-9 pr-4 py-3.5 text-base font-semibold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                </div>
+                <p id="settleLimit" class="mt-2 text-xs text-slate-500"></p>
+            </div>
+
+            <div>
+                <label for="settleMethod" class="block text-sm font-semibold text-slate-800 mb-2">Payment Method</label>
+                <select id="settleMethod" name="payment_method" class="w-full rounded-xl border border-slate-200 px-4 py-3.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                    <option value="card">Card</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-1">
+                <button type="button" onclick="closeSettleModal()" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/20 hover:from-orange-600 hover:to-amber-600">Settle Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const settleModal = document.getElementById("settleModal");
+    const settleForm = document.getElementById("settleForm");
+    const settleAmount = document.getElementById("settleAmount");
+
+    function money(value) {
+        return "₹" + Number(value).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function openSettleModal(settleUrl, billNumber, customer, total, advance, pending) {
+        settleForm.action = settleUrl;
+        document.getElementById("settleCustomer").textContent = "Bill #" + billNumber + " • " + customer;
+        document.getElementById("settleTotal").textContent = money(total);
+        document.getElementById("settlePending").textContent = money(pending);
+        document.getElementById("settleLimit").textContent = "Maximum you can collect now: " + money(pending);
+        settleAmount.value = Number(pending).toFixed(2);
+        settleAmount.max = Number(pending).toFixed(2);
+        document.getElementById("settleMethod").value = "cash";
+        settleModal.classList.remove("hidden");
+        settleModal.classList.add("flex");
+        document.body.classList.add("overflow-hidden");
+        setTimeout(() => settleAmount.focus(), 100);
+    }
+
+    function closeSettleModal() {
+        settleModal.classList.add("hidden");
+        settleModal.classList.remove("flex");
+        document.body.classList.remove("overflow-hidden");
+    }
+
+    settleForm.addEventListener("submit", function(event) {
+        const amount = Number(settleAmount.value);
+        const max = Number(settleAmount.max);
+        if (!amount || amount <= 0 || amount > max) {
+            event.preventDefault();
+            settleAmount.focus();
+            alert("Please enter a valid amount up to the pending balance.");
+        }
+    });
+
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "Escape" && !settleModal.classList.contains("hidden")) {
+            closeSettleModal();
+        }
+    });
+</script>
+{% endblock %}

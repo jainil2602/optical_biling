@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Optical Billing
+        {% endblock %}
+    </title>
+
+
+    <!-- ===================================================== -->
+    <!-- TAILWIND CSS -->
+    <!-- ===================================================== -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+
+        tailwind.config = {
+
+            theme: {
+
+                extend: {
+
+                    fontFamily: {
+
+                        sans: [
+                            'Inter',
+                            'ui-sans-serif',
+                            'system-ui'
+                        ]
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    </script>
+
+
+    <!-- ===================================================== -->
+    <!-- CUSTOM CSS -->
+    <!-- ===================================================== -->
+
+    <style>
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 transparent;
+        }
+
+
+        html,
+        body {
+            overflow-x: hidden;
+        }
+
+
+        body {
+
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                sans-serif;
+
+        }
+
+
+        /* ================================================ */
+        /* SIDEBAR TRANSITION */
+        /* ================================================ */
+
+        .sidebar-transition {
+
+            transition:
+                transform 0.3s ease,
+                width 0.3s ease;
+
+        }
+
+
+        /* ================================================ */
+        /* NAVIGATION */
+        /* ================================================ */
+
+        .nav-item {
+
+            transition:
+                background-color 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+
+        }
+
+
+        .nav-item:hover {
+
+            transform: translateX(2px);
+
+        }
+
+
+        /* ================================================ */
+        /* ACTIVE NAVIGATION */
+        /* ================================================ */
+
+        .nav-active {
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #6366f1,
+                    #2563eb
+                );
+
+            color: white;
+
+            box-shadow:
+                0 8px 20px
+                rgba(37, 99, 235, 0.25);
+
+        }
+
+
+        /* ================================================ */
+        /* INACTIVE NAVIGATION */
+        /* ================================================ */
+
+        .nav-inactive {
+
+            color: #dbeafe;
+
+        }
+
+
+        .nav-inactive:hover {
+
+            background:
+                rgba(255, 255, 255, 0.10);
+
+            color: white;
+
+        }
+
+
+        /* ================================================ */
+        /* MOBILE SIDEBAR */
+        /* ================================================ */
+
+        @media (max-width: 1023px) {
+
+            #sidebar {
+
+                box-shadow:
+                    10px 0 30px
+                    rgba(15, 23, 42, 0.25);
+
+            }
+
+        }
+
+    </style>
+
+
+    <!-- ===================================================== -->
+    <!-- EXTRA HEAD -->
+    <!-- ===================================================== -->
+
+    {% block extra_head %}
+    {% endblock %}
+
+</head>
+
+
+<body class="bg-[#f8f9fd] text-slate-900">
+
+
+<!-- ========================================================= -->
+<!-- MOBILE SIDEBAR OVERLAY -->
+<!-- ========================================================= -->
+
+<div
+    id="sidebarOverlay"
+    class="
+        fixed
+        inset-0
+        bg-slate-950/50
+        z-40
+        hidden
+        lg:hidden
+    "
+></div>
+
+
+<!-- ========================================================= -->
+<!-- APPLICATION -->
+<!-- ========================================================= -->
+
+<div class="min-h-screen flex">
+
+
+    <!-- ===================================================== -->
+    <!-- SIDEBAR -->
+    <!-- ===================================================== -->
+
+    <aside
+        id="sidebar"
+        class="
+            fixed
+            left-0
+            top-0
+            z-50
+            h-screen
+            w-[265px]
+
+            bg-gradient-to-b
+            from-[#11185c]
+            via-[#12135e]
+            to-[#080d42]
+
+            text-white
+
+            transform
+            -translate-x-full
+
+            lg:translate-x-0
+
+            sidebar-transition
+
+            flex
+            flex-col
+        "
+    >
+
+
+        <!-- ================================================= -->
+        <!-- LOGO -->
+        <!-- ================================================= -->
+
+        <div class="px-6 py-5">
+
+            <div class="flex items-center gap-3">
+
+
+                <!-- Logo Icon -->
+
+                <div
+                    class="
+                        w-12
+                        h-12
+                        rounded-full
+
+                        bg-gradient-to-br
+                        from-cyan-400
+                        to-blue-500
+
+                        flex
+                        items-center
+                        justify-center
+
+                        text-2xl
+
+                        shadow-lg
+                        shrink-0
+                    "
+                >
+                    👓
+                </div>
+
+
+                <!-- Logo Text -->
+
+                <div class="min-w-0">
+
+                    <h1
+                        class="
+                            font-bold
+                            text-lg
+                            leading-tight
+                            truncate
+                        "
+                    >
+                        Optical Billing
+                    </h1>
+
+
+                    <p class="text-xs text-blue-200 mt-1">
+                        Management System
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- NAVIGATION -->
+        <!-- ================================================= -->
+
+        <nav
+            class="
+                flex-1
+                px-4
+                py-3
+                overflow-y-auto
+            "
+        >
+
+
+            <!-- ============================================= -->
+            <!-- MAIN -->
+            <!-- ============================================= -->
+
+            <p
+                class="
+                    px-4
+                    pt-2
+                    pb-3
+                    text-xs
+                    uppercase
+                    tracking-wider
+                    text-blue-200/70
+                "
+            >
+                Main
+            </p>
+
+
+            <!-- ============================================= -->
+            <!-- DASHBOARD -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'dashboard' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+
+                    {% if request.resolver_match.url_name == 'dashboard' %}
+                        nav-active
+                    {% else %}
+                        nav-inactive
+                    {% endif %}
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    ▦
+                </span>
+
+                <span class="font-semibold">
+                    Dashboard
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- NEW BILL -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'new_bill' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+
+                    {% if request.resolver_match.url_name == 'new_bill' %}
+                        nav-active
+                    {% else %}
+                        nav-inactive
+                    {% endif %}
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    🧾
+                </span>
+
+                <span>
+                    New Bill
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- CUSTOMERS -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'customer_list' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+
+                    {% if request.resolver_match.url_name == 'customer_list' or request.resolver_match.url_name == 'customer_detail' %}
+                        nav-active
+                    {% else %}
+                        nav-inactive
+                    {% endif %}
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    👥
+                </span>
+
+                <span>
+                    Customers
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- BILL HISTORY -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'bill_history' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+
+                    {% if request.resolver_match.url_name == 'bill_history' %}
+                        nav-active
+                    {% else %}
+                        nav-inactive
+                    {% endif %}
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    📋
+                </span>
+
+                <span>
+                    Bill History
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- PAYMENTS -->
+            <!-- ============================================= -->
+
+            <a
+    href="{% url 'payment_history' %}"
+
+    class="
+        nav-item
+        flex
+        items-center
+        gap-4
+        px-4
+        py-3.5
+        rounded-xl
+        mb-1
+
+        {% if request.resolver_match.url_name == 'payment_history' %}
+            nav-active
+        {% else %}
+            nav-inactive
+        {% endif %}
+    "
+>
+
+    <span class="text-xl w-6 text-center">
+        ₹
+    </span>
+
+    <span>
+        Payments
+    </span>
+
+</a>
+
+
+            <!-- ============================================= -->
+            <!-- REPORTS -->
+            <!-- ============================================= -->
+
+            
+
+
+            <!-- ============================================= -->
+            <!-- SHOP SETUP -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'shop_setup' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+
+                    {% if request.resolver_match.url_name == 'shop_setup' %}
+                        nav-active
+                    {% else %}
+                        nav-inactive
+                    {% endif %}
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    🏪
+                </span>
+
+                <span>
+                    Shop Setup
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- INVENTORY -->
+            <!-- ============================================= -->
+
+            <a
+                href="#"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+                    nav-inactive
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    📦
+                </span>
+
+                <span>
+                    Inventory
+                </span>
+
+            </a>
+
+
+            <!-- ============================================= -->
+            <!-- SETTINGS -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'settings' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    rounded-xl
+                    mb-1
+                    nav-inactive
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    ⚙️
+                </span>
+
+                <span>
+                    Settings
+                </span>
+
+            </a>
+
+        </nav>
+
+
+        <!-- ================================================= -->
+        <!-- USER SECTION -->
+        <!-- ================================================= -->
+
+        <div class="px-4">
+
+
+            <!-- ============================================= -->
+            <!-- USER INFO -->
+            <!-- ============================================= -->
+
+            <div class="flex items-center gap-3 py-4">
+
+
+                <!-- User Avatar -->
+
+                <div
+                    class="
+                        w-12
+                        h-12
+                        rounded-full
+
+                        bg-gradient-to-br
+                        from-violet-500
+                        to-purple-600
+
+                        flex
+                        items-center
+                        justify-center
+
+                        text-lg
+                        font-bold
+
+                        shrink-0
+                    "
+                >
+                    {{ request.user.username|first|upper }}
+                </div>
+
+
+                <!-- User Details -->
+
+                <div class="flex-1 min-w-0">
+
+                    <p class="font-semibold truncate">
+
+                        {{ request.user.username }}
+
+                    </p>
+
+
+                    <p class="text-xs text-blue-200">
+
+                        Shop Owner
+
+                    </p>
+
+
+                    <div class="flex items-center gap-1 mt-1">
+
+                        <span
+                            class="
+                                w-2
+                                h-2
+                                rounded-full
+                                bg-emerald-400
+                            "
+                        ></span>
+
+                        <span class="text-xs text-blue-200">
+
+                            Online
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <span class="text-blue-200">
+                    ⌄
+                </span>
+
+            </div>
+
+
+            <!-- ============================================= -->
+            <!-- LOGOUT -->
+            <!-- ============================================= -->
+
+            <a
+                href="{% url 'logout' %}"
+
+                class="
+                    nav-item
+                    flex
+                    items-center
+                    gap-4
+                    px-4
+                    py-3.5
+                    mb-4
+                    rounded-xl
+
+                    bg-white/5
+
+                    hover:bg-red-500/15
+
+                    text-red-300
+                "
+            >
+
+                <span class="text-xl w-6 text-center">
+                    ↪
+                </span>
+
+                <span>
+                    Logout
+                </span>
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- ===================================================== -->
+    <!-- MAIN AREA -->
+    <!-- ===================================================== -->
+
+    <div
+        class="
+            lg:ml-[265px]
+            min-h-screen
+            flex-1
+            min-w-0
+        "
+    >
+
+
+        <!-- ================================================= -->
+        <!-- MOBILE HEADER -->
+        <!-- ================================================= -->
+
+        <header
+            class="
+                lg:hidden
+                h-16
+
+                bg-white
+                border-b
+                border-slate-200
+
+                sticky
+                top-0
+                z-30
+
+                px-4
+
+                flex
+                items-center
+                justify-between
+            "
+        >
+
+
+            <!-- Menu Button -->
+
+            <button
+                id="menuButton"
+                type="button"
+
+                class="
+                    w-10
+                    h-10
+                    rounded-xl
+
+                    bg-slate-50
+                    border
+                    border-slate-200
+
+                    flex
+                    items-center
+                    justify-center
+
+                    text-lg
+                "
+
+                aria-label="Open menu"
+            >
+
+                ☰
+
+            </button>
+
+
+            <!-- Mobile Logo -->
+
+            <div class="flex items-center gap-2 min-w-0">
+
+                <div
+                    class="
+                        w-9
+                        h-9
+                        rounded-full
+
+                        bg-gradient-to-br
+                        from-cyan-400
+                        to-blue-500
+
+                        flex
+                        items-center
+                        justify-center
+
+                        shrink-0
+                    "
+                >
+                    👓
+                </div>
+
+
+                <span class="font-bold truncate">
+
+                    Optical Billing
+
+                </span>
+
+            </div>
+
+
+            <!-- Mobile User -->
+
+            <div
+                class="
+                    w-10
+                    h-10
+                    rounded-full
+
+                    bg-sky-100
+                    text-sky-700
+
+                    flex
+                    items-center
+                    justify-center
+
+                    font-semibold
+
+                    shrink-0
+                "
+            >
+
+                {{ request.user.username|first|upper }}
+
+            </div>
+
+        </header>
+
+
+        <!-- ================================================= -->
+        <!-- DESKTOP TOP BAR -->
+        <!-- ================================================= -->
+
+        <header
+            class="
+                hidden
+                lg:flex
+
+                h-[68px]
+
+                bg-white
+                border-b
+                border-slate-200
+
+                sticky
+                top-0
+                z-30
+
+                items-center
+                justify-between
+
+                px-8
+            "
+        >
+
+
+            <!-- Page Title -->
+
+            <div>
+
+                <p class="text-sm text-slate-500">
+
+                    Optical Shop Management
+
+                </p>
+
+
+                <h2 class="font-semibold text-lg">
+
+                    {% block page_heading %}
+
+                        Dashboard
+
+                    {% endblock %}
+
+                </h2>
+
+            </div>
+
+
+            <!-- Right Side -->
+
+            <div class="flex items-center gap-5">
+
+
+                <!-- ========================================= -->
+                <!-- NOTIFICATION -->
+                <!-- ========================================= -->
+
+                
+
+
+                <!-- ========================================= -->
+                <!-- DATE -->
+                <!-- ========================================= -->
+
+                <div
+                    class="
+                        hidden
+                        xl:flex
+
+                        items-center
+                        gap-2
+
+                        px-4
+                        py-2.5
+
+                        rounded-xl
+
+                        border
+                        border-slate-200
+
+                        bg-white
+
+                        text-sm
+                        text-slate-600
+                    "
+                >
+
+                    <span>
+                        🗓️
+                    </span>
+
+
+                    <span>
+
+                        {% now "D, d M Y" %}
+
+                    </span>
+
+                </div>
+
+
+                <!-- ========================================= -->
+                <!-- DESKTOP USER -->
+                <!-- ========================================= -->
+
+                <div class="flex items-center gap-3">
+
+
+                    <div class="text-right">
+
+                        <p class="text-sm font-medium">
+
+                            {{ request.user.username }}
+
+                        </p>
+
+
+                        <p class="text-xs text-slate-500">
+
+                            Shop Owner
+
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        class="
+                            w-10
+                            h-10
+                            rounded-full
+
+                            bg-sky-100
+                            text-sky-700
+
+                            flex
+                            items-center
+                            justify-center
+
+                            font-semibold
+                        "
+                    >
+
+                        {{ request.user.username|first|upper }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================================================= -->
+        <!-- PAGE CONTENT -->
+        <!-- ================================================= -->
+
+        <main
+            class="
+                p-4
+                sm:p-6
+                lg:p-8
+            "
+        >
+
+            {% block content %}
+            {% endblock %}
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================================= -->
+
+<script>
+
+    /* ===================================================== */
+    /* ELEMENTS */
+    /* ===================================================== */
+
+    const menuButton =
+        document.getElementById("menuButton");
+
+    const sidebar =
+        document.getElementById("sidebar");
+
+    const sidebarOverlay =
+        document.getElementById("sidebarOverlay");
+
+
+    /* ===================================================== */
+    /* OPEN SIDEBAR */
+    /* ===================================================== */
+
+    function openSidebar() {
+
+        if (!sidebar || !sidebarOverlay) {
+            return;
+        }
+
+
+        sidebar.classList.remove(
+            "-translate-x-full"
+        );
+
+
+        sidebarOverlay.classList.remove(
+            "hidden"
+        );
+
+
+        document.body.classList.add(
+            "overflow-hidden"
+        );
+
+    }
+
+
+    /* ===================================================== */
+    /* CLOSE SIDEBAR */
+    /* ===================================================== */
+
+    function closeSidebar() {
+
+        if (!sidebar || !sidebarOverlay) {
+            return;
+        }
+
+
+        sidebar.classList.add(
+            "-translate-x-full"
+        );
+
+
+        sidebarOverlay.classList.add(
+            "hidden"
+        );
+
+
+        document.body.classList.remove(
+            "overflow-hidden"
+        );
+
+    }
+
+
+    /* ===================================================== */
+    /* MENU BUTTON */
+    /* ===================================================== */
+
+    menuButton?.addEventListener(
+        "click",
+        openSidebar
+    );
+
+
+    /* ===================================================== */
+    /* OVERLAY */
+    /* ===================================================== */
+
+    sidebarOverlay?.addEventListener(
+        "click",
+        closeSidebar
+    );
+
+
+    /* ===================================================== */
+    /* MOBILE NAVIGATION */
+    /* ===================================================== */
+
+    document
+        .querySelectorAll("#sidebar a")
+        .forEach(function(link) {
+
+            link.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        window.innerWidth < 1024
+                    ) {
+
+                        closeSidebar();
+
+                    }
+
+                }
+            );
+
+        });
+
+
+    /* ===================================================== */
+    /* ESC KEY */
+    /* ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Escape" &&
+                window.innerWidth < 1024
+            ) {
+
+                closeSidebar();
+
+            }
+
+        }
+    );
+
+</script>
+
+
+<!-- ========================================================= -->
+<!-- PAGE-SPECIFIC JAVASCRIPT -->
+<!-- ========================================================= -->
+
+{% block extra_scripts %}
+{% endblock %}
+
+
+</body>
+
+</html>

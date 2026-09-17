@@ -1,0 +1,840 @@
+{% extends "base.html" %}
+
+{% block title %}New Bill - Optical Billing{% endblock %}
+
+{% block page_heading %}New Bill{% endblock %}
+
+{% block extra_head %}
+<style>
+input, select, textarea { outline: none; }
+input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.section-card { background: white; border: 1px solid #e5e7eb; border-radius: 18px; box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-[1500px] mx-auto">
+    {% if error %}
+    <div class="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">{{ error }}</div>
+    {% endif %}
+
+        {% if error %}
+        <div class="mb-6 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+            {{ error }}
+        </div>
+        {% endif %}
+
+
+        <form method="POST" id="billForm">
+
+            {% csrf_token %}
+
+
+            <!-- CUSTOMER -->
+            <section class="section-card p-5 sm:p-6 mb-6">
+
+                <div class="flex items-center justify-between mb-5">
+
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">
+                            Customer Details
+                        </h2>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Select the customer for this bill
+                        </p>
+                    </div>
+
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                        👤
+                    </div>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <div class="md:col-span-1">
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Customer
+                        </label>
+
+                        <div class="relative">
+
+    <!-- Search Input -->
+    <input
+        type="text"
+        id="customerSearch"
+        autocomplete="off"
+        placeholder="Search customer by name or mobile..."
+        class="w-full rounded-xl border border-slate-200 px-4 py-3 pr-12 bg-white
+               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+
+    <!-- Search Icon -->
+    <div class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+        🔍
+    </div>
+
+    <!-- Hidden customer ID sent to Django -->
+    <input
+        type="hidden"
+        name="customer_id"
+        id="customerId"
+        required
+    >
+
+    <!-- Search Results -->
+    <div
+        id="customerResults"
+        class="hidden absolute z-50 left-0 right-0 mt-2 bg-white
+               border border-slate-200 rounded-xl shadow-xl overflow-hidden">
+
+        {% for customer in customers %}
+
+        <button
+            type="button"
+            class="customer-result w-full text-left px-4 py-3
+                   hover:bg-blue-50 transition border-b border-slate-100 last:border-0"
+            data-id="{{ customer.id }}"
+            data-name="{{ customer.name }}"
+            data-mobile="{{ customer.mobile }}"
+        >
+
+            <div class="font-semibold text-slate-900">
+                {{ customer.name }}
+            </div>
+
+            <div class="text-sm text-slate-500">
+                📱 {{ customer.mobile }}
+            </div>
+
+        </button>
+
+        {% endfor %}
+
+        <!-- No customer message -->
+        <div
+            id="noCustomerFound"
+            class="hidden px-4 py-4 text-sm text-slate-500 text-center">
+            No customer found.
+        </div>
+
+    </div>
+
+</div>
+
+                    </div>
+
+                    <div class="md:col-span-2 flex items-end">
+
+                        <a href="{% url 'customer_add' %}"
+                           class="w-full md:w-auto px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition text-center">
+
+                            + Add New Customer
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- PRESCRIPTION -->
+            <section class="section-card p-5 sm:p-6 mb-6">
+
+                <div class="flex items-center justify-between mb-5">
+
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">
+                            Optical Prescription
+                        </h2>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Enter the customer's eye prescription
+                        </p>
+                    </div>
+
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        👁
+                    </div>
+
+                </div>
+
+
+                <!-- PRESCRIPTION TABLE -->
+                <!-- One set of inputs only.
+                     The previous desktop + mobile versions used the same
+                     field names twice, so the blank mobile inputs could
+                     overwrite the values entered on desktop when the form
+                     was submitted. This single responsive table prevents
+                     that problem. -->
+
+                <div class="overflow-x-auto">
+
+                    <table class="w-full min-w-[650px]">
+
+                        <thead>
+                            <tr class="border-b border-slate-200">
+                                <th class="text-left px-4 py-3 text-sm font-semibold text-slate-500">
+                                    Eye
+                                </th>
+                                <th class="px-3 py-3 text-sm font-semibold text-slate-500">SPH</th>
+                                <th class="px-3 py-3 text-sm font-semibold text-slate-500">CYL</th>
+                                <th class="px-3 py-3 text-sm font-semibold text-slate-500">AXIS</th>
+                                <th class="px-3 py-3 text-sm font-semibold text-slate-500">ADD</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <tr class="border-b border-slate-100">
+                                <td class="px-4 py-4">
+                                    <span class="font-bold text-slate-900">R</span>
+                                    <span class="text-xs text-slate-400 ml-1">Right</span>
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="right_sph" type="text" placeholder="SPH"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="right_cyl" type="text" placeholder="CYL"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="right_axis" type="text" placeholder="AXIS"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="right_add" type="text" placeholder="ADD"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="px-4 py-4">
+                                    <span class="font-bold text-slate-900">L</span>
+                                    <span class="text-xs text-slate-400 ml-1">Left</span>
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="left_sph" type="text" placeholder="SPH"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="left_cyl" type="text" placeholder="CYL"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="left_axis" type="text" placeholder="AXIS"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <input name="left_add" type="text" placeholder="ADD"
+                                           class="w-full min-w-[110px] rounded-lg border border-slate-200 px-3 py-2.5">
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- PD -->
+
+                <div class="mt-5 max-w-xs">
+
+                    <label class="block text-sm font-semibold mb-2">
+                        PD (Pupillary Distance)
+                    </label>
+
+                    <input
+                        name="pd"
+                        type="text"
+                        placeholder="e.g. 62"
+                        class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ITEMS -->
+            <section class="section-card p-5 sm:p-6 mb-6">
+
+                <div class="flex items-center justify-between mb-5">
+
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">
+                            Bill Items
+                        </h2>
+
+                        <p class="text-sm text-slate-500 mt-1">
+                            Add frames, lenses, accessories or other products
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onclick="addItem()"
+                        class="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition">
+
+                        + Add Item
+
+                    </button>
+
+                </div>
+
+
+                <div id="itemsContainer" class="space-y-3">
+
+                    <div class="item-row grid grid-cols-12 gap-3 items-end">
+
+                        <div class="col-span-12 md:col-span-5">
+
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">
+                                Item Name
+                            </label>
+
+                            <input
+                                name="item_name[]"
+                                type="text"
+                                placeholder="Frame / Lens / Accessory"
+                                required
+                                class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                        </div>
+
+
+                        <div class="col-span-4 md:col-span-2">
+
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">
+                                Quantity
+                            </label>
+
+                            <input
+                                name="quantity[]"
+                                type="number"
+                                min="1"
+                                value="1"
+                                required
+                                oninput="calculateTotals()"
+                                class="quantity w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                        </div>
+
+
+                        <div class="col-span-8 md:col-span-2">
+
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">
+                                Rate
+                            </label>
+
+                            <input
+                                name="rate[]"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                required
+                                oninput="calculateTotals()"
+                                class="rate w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                        </div>
+
+
+                        <div class="col-span-9 md:col-span-2">
+
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">
+                                Total
+                            </label>
+
+                            <input
+                                type="text"
+                                readonly
+                                value="₹0.00"
+                                class="item-total w-full rounded-xl bg-slate-100 border border-slate-200 px-4 py-3 font-semibold">
+
+                        </div>
+
+
+                        <div class="col-span-3 md:col-span-1">
+
+                            <button
+                                type="button"
+                                onclick="removeItem(this)"
+                                class="w-full h-[50px] rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition">
+
+                                ✕
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- PAYMENT -->
+            <section class="section-card p-5 sm:p-6 mb-6">
+
+                <div class="mb-5">
+
+                    <h2 class="text-lg font-bold text-slate-900">
+                        Payment Details
+                    </h2>
+
+                    <p class="text-sm text-slate-500 mt-1">
+                        Review bill amount and payment
+                    </p>
+
+                </div>
+
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+                    <!-- LEFT -->
+
+                    <div class="space-y-4">
+
+                        <div class="flex justify-between items-center">
+
+                            <span class="text-slate-500">
+                                Subtotal
+                            </span>
+
+                            <span id="subtotalDisplay"
+                                  class="font-semibold">
+                                ₹0.00
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <label class="block text-sm font-semibold mb-2">
+                                Discount
+                            </label>
+
+                            <input
+                                id="discount"
+                                name="discount"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                                oninput="calculateTotals()"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                        </div>
+
+
+                        <div class="border-t border-slate-200 pt-4 flex justify-between">
+
+                            <span class="font-bold text-lg">
+                                Grand Total
+                            </span>
+
+                            <span id="grandTotalDisplay"
+                                  class="font-bold text-xl text-blue-600">
+                                ₹0.00
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- RIGHT -->
+
+                    <div class="space-y-4">
+
+                        <div>
+
+                            <label class="block text-sm font-semibold mb-2">
+                                Advance Payment
+                            </label>
+
+                            <input
+                                id="advance"
+                                name="advance_payment"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value="0"
+                                oninput="calculateTotals()"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                        </div>
+
+
+                        <div class="flex justify-between items-center bg-orange-50 rounded-xl px-4 py-4">
+
+                            <span class="font-semibold text-orange-700">
+                                Remaining Amount
+                            </span>
+
+                            <span id="remainingDisplay"
+                                  class="font-bold text-orange-700">
+                                ₹0.00
+                            </span>
+
+                        </div>
+
+
+                        <div>
+
+                            <label class="block text-sm font-semibold mb-2">
+                                Payment Method
+                            </label>
+
+                            <select
+                                name="payment_method"
+                                class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                                <option value="cash">
+                                    Cash
+                                </option>
+
+                                <option value="upi">
+                                    UPI
+                                </option>
+
+                                <option value="card">
+                                    Card
+                                </option>
+
+                                <option value="other">
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- DELIVERY -->
+            <section class="section-card p-5 sm:p-6 mb-6">
+
+                <h2 class="text-lg font-bold text-slate-900 mb-5">
+                    Delivery & Notes
+                </h2>
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <div>
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Delivery Date
+                        </label>
+
+                        <input
+                            name="delivery_date"
+                            type="date"
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3">
+
+                    </div>
+
+
+                    <div>
+
+                        <label class="block text-sm font-semibold mb-2">
+                            Notes
+                        </label>
+
+                        <textarea
+                            name="notes"
+                            rows="3"
+                            placeholder="Additional notes..."
+                            class="w-full rounded-xl border border-slate-200 px-4 py-3"></textarea>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- ACTIONS -->
+
+            <div class="flex flex-col sm:flex-row justify-end gap-3 pb-8">
+
+                <a href="{% url 'dashboard' %}"
+                   class="px-6 py-3.5 rounded-xl border border-slate-200 bg-white font-semibold text-center hover:bg-slate-50 transition">
+
+                    Cancel
+
+                </a>
+
+
+                <button
+                    type="submit"
+                    class="px-8 py-3.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+
+                    💾 Save Bill
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </main>
+
+</div>
+
+
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+
+function calculateTotals() {
+
+    let subtotal = 0;
+
+    const rows = document.querySelectorAll(".item-row");
+
+    rows.forEach(row => {
+
+        const quantity =
+            parseFloat(row.querySelector(".quantity").value) || 0;
+
+        const rate =
+            parseFloat(row.querySelector(".rate").value) || 0;
+
+        const total = quantity * rate;
+
+        subtotal += total;
+
+        row.querySelector(".item-total").value =
+            "₹" + total.toFixed(2);
+
+    });
+
+
+    const discount =
+        parseFloat(document.getElementById("discount").value) || 0;
+
+    const advance =
+        parseFloat(document.getElementById("advance").value) || 0;
+
+
+    const safeDiscount =
+        Math.min(Math.max(discount, 0), subtotal);
+
+    const grandTotal =
+        subtotal - safeDiscount;
+
+    const remaining =
+        Math.max(grandTotal - advance, 0);
+
+
+    document.getElementById("subtotalDisplay").textContent =
+        "₹" + subtotal.toFixed(2);
+
+    document.getElementById("grandTotalDisplay").textContent =
+        "₹" + grandTotal.toFixed(2);
+
+    document.getElementById("remainingDisplay").textContent =
+        "₹" + remaining.toFixed(2);
+}
+
+
+
+function addItem() {
+
+    const container =
+        document.getElementById("itemsContainer");
+
+    const firstRow =
+        container.querySelector(".item-row");
+
+    const newRow =
+        firstRow.cloneNode(true);
+
+
+    newRow.querySelectorAll("input").forEach(input => {
+
+        if (input.classList.contains("quantity")) {
+
+            input.value = 1;
+
+        } else if (input.classList.contains("item-total")) {
+
+            input.value = "₹0.00";
+
+        } else {
+
+            input.value = "";
+
+        }
+
+    });
+
+
+    container.appendChild(newRow);
+
+    calculateTotals();
+}
+
+
+
+function removeItem(button) {
+
+    const rows =
+        document.querySelectorAll(".item-row");
+
+
+    if (rows.length === 1) {
+
+        alert("At least one item is required.");
+
+        return;
+
+    }
+
+
+    button.closest(".item-row").remove();
+
+    calculateTotals();
+}
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    calculateTotals();
+
+});
+
+
+
+
+
+
+const customerSearch = document.getElementById("customerSearch");
+const customerId = document.getElementById("customerId");
+const customerResults = document.getElementById("customerResults");
+const customerButtons = document.querySelectorAll(".customer-result");
+const noCustomerFound = document.getElementById("noCustomerFound");
+
+
+customerSearch.addEventListener("input", function () {
+
+    const searchValue = this.value.toLowerCase().trim();
+
+    customerResults.classList.remove("hidden");
+
+    let visibleCustomers = 0;
+
+    customerButtons.forEach(button => {
+
+        const name = button.dataset.name.toLowerCase();
+        const mobile = button.dataset.mobile.toLowerCase();
+
+        if (
+            name.includes(searchValue) ||
+            mobile.includes(searchValue)
+        ) {
+
+            button.classList.remove("hidden");
+            visibleCustomers++;
+
+        } else {
+
+            button.classList.add("hidden");
+
+        }
+
+    });
+
+
+    if (visibleCustomers === 0) {
+
+        noCustomerFound.classList.remove("hidden");
+
+    } else {
+
+        noCustomerFound.classList.add("hidden");
+
+    }
+
+});
+
+
+customerButtons.forEach(button => {
+
+    button.addEventListener("click", function () {
+
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        const mobile = this.dataset.mobile;
+
+        // Set selected customer
+        customerId.value = id;
+
+        // Show selected customer
+        customerSearch.value = `${name} — ${mobile}`;
+
+        // Hide results
+        customerResults.classList.add("hidden");
+
+    });
+
+});
+
+
+/* Open results when input is focused */
+customerSearch.addEventListener("focus", function () {
+
+    customerResults.classList.remove("hidden");
+
+});
+
+
+/* Close results when clicking outside */
+document.addEventListener("click", function (event) {
+
+    if (!event.target.closest("#customerSearch") &&
+        !event.target.closest("#customerResults")) {
+
+        customerResults.classList.add("hidden");
+
+    }
+
+});
+
+
+</script>
+{% endblock %}
