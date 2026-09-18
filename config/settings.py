@@ -6,9 +6,19 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from dotenv import load_dotenv
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+# =========================================================
+# ENVIRONMENT VARIABLES
+# =========================================================
+
+# Load local .env.local when developing.
+# On Render, environment variables are provided directly by Render.
+load_dotenv(BASE_DIR / ".env.local")
 
 
 # =========================================================
@@ -115,10 +125,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 # =========================================================
 #
 # Local development:
-#     SQLite
+#     If DATABASE_URL exists in .env.local -> Neon PostgreSQL
+#     Otherwise -> SQLite
 #
-# Render production:
-#     PostgreSQL through DATABASE_URL
+# Production:
+#     Render provides DATABASE_URL -> PostgreSQL
 #
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -237,18 +248,28 @@ LOGOUT_REDIRECT_URL = "/"
 
 
 # =========================================================
-# SECURITY SETTINGS
+# PRODUCTION SECURITY
 # =========================================================
 
 if not DEBUG:
+    # Render terminates HTTPS and forwards the original protocol.
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
         "https",
     )
 
+    # Redirect HTTP requests to HTTPS.
+    SECURE_SSL_REDIRECT = True
+
+    # HSTS
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+    # Secure cookies
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+    # Browser security
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
