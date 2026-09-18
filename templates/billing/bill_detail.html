@@ -1431,7 +1431,7 @@ Bill Details
                 >
 
                     <span
-                        id="downloadBillIcon"
+                        id="downloadBillIcon" data-download-icon
                         class="
                             flex
                             h-11
@@ -1452,7 +1452,7 @@ Bill Details
                     <span class="flex-1">
 
                         <span
-                            id="downloadBillTitle"
+                            id="downloadBillTitle" data-download-title
                             class="
                                 block
                                 font-semibold
@@ -1464,7 +1464,7 @@ Bill Details
 
 
                         <span
-                            id="downloadBillDescription"
+                            id="downloadBillDescription" data-download-description
                             class="
                                 mt-0.5
                                 block
@@ -1479,7 +1479,7 @@ Bill Details
 
 
                     <span
-                        id="downloadBillArrow"
+                        id="downloadBillArrow" data-download-arrow
                         class="text-slate-400"
                     >
                         →
@@ -1597,6 +1597,8 @@ Bill Details
 </div>
 
 
+{% endif %}
+
 <script>
 
 function closeBillSavedModal() {
@@ -1640,16 +1642,24 @@ async function downloadBillPDF(button) {
     const originalButton = button;
 
     const originalIcon =
-        document.getElementById("downloadBillIcon");
+        originalButton
+            ? originalButton.querySelector("[data-download-icon]")
+            : null;
 
     const originalTitle =
-        document.getElementById("downloadBillTitle");
+        originalButton
+            ? originalButton.querySelector("[data-download-title]")
+            : null;
 
     const originalDescription =
-        document.getElementById("downloadBillDescription");
+        originalButton
+            ? originalButton.querySelector("[data-download-description]")
+            : null;
 
     const originalArrow =
-        document.getElementById("downloadBillArrow");
+        originalButton
+            ? originalButton.querySelector("[data-download-arrow]")
+            : null;
 
 
     /* ----------------------------------------------------- */
@@ -2115,7 +2125,6 @@ function closeDeleteBillModal() {
 
 </script>
 
-{% endif %}
 <!-- Delete Confirmation Modal -->
 <div id="deleteBillModal"
      class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/70 p-4">
