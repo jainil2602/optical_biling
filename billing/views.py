@@ -1,10 +1,12 @@
 from decimal import Decimal, InvalidOperation
+from urllib.parse import quote
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Q, Sum, F, Value
 from django.db.models.functions import Coalesce, Greatest
 from django.core.paginator import Paginator
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.urls import reverse
@@ -21,7 +23,6 @@ from .models import Bill, BillItem, Prescription, Payment
 @login_required
 def new_bill(request):
 
-    # Make sure the logged-in user has completed shop setup
     try:
         shop = request.user.shop
     except Shop.DoesNotExist:
@@ -30,10 +31,6 @@ def new_bill(request):
     customers = shop.customers.all().order_by("name")
 
     if request.method == "POST":
-
-        # -----------------------------------------------------
-        # CUSTOMER
-        # -----------------------------------------------------
 
         customer_id = request.POST.get("customer_id")
 
@@ -118,7 +115,6 @@ def new_bill(request):
         # -----------------------------------------------------
 
         try:
-
             discount = Decimal(
                 request.POST.get(
                     "discount",
@@ -138,21 +134,17 @@ def new_bill(request):
             discount = Decimal("0.00")
             advance_payment = Decimal("0.00")
 
-        # Discount cannot be negative
         if discount < 0:
             discount = Decimal("0.00")
 
-        # Discount cannot exceed subtotal
         if discount > subtotal:
             discount = subtotal
 
         grand_total = subtotal - discount
 
-        # Advance cannot be negative
         if advance_payment < 0:
             advance_payment = Decimal("0.00")
 
-        # Advance cannot exceed grand total
         if advance_payment > grand_total:
             advance_payment = grand_total
 
@@ -243,14 +235,10 @@ def new_bill(request):
         }
 
         # -----------------------------------------------------
-        # CREATE EVERYTHING AT ONCE
+        # CREATE EVERYTHING
         # -----------------------------------------------------
 
         with transaction.atomic():
-
-            # -------------------------------------------------
-            # GENERATE BILL NUMBER
-            # -------------------------------------------------
 
             today = timezone.localdate()
 
@@ -264,7 +252,6 @@ def new_bill(request):
                 f"{bill_count + 1:04d}"
             )
 
-            # Extra protection against duplicate bill number
             while Bill.objects.filter(
                 bill_number=bill_number
             ).exists():
@@ -275,10 +262,6 @@ def new_bill(request):
                     f"{today.strftime('%Y%m%d')}-"
                     f"{bill_count + 1:04d}"
                 )
-
-            # -------------------------------------------------
-            # CREATE BILL
-            # -------------------------------------------------
 
             bill = Bill.objects.create(
                 shop=shop,
@@ -294,26 +277,14 @@ def new_bill(request):
                 notes=notes,
             )
 
-            # -------------------------------------------------
-            # INITIAL ADVANCE PAYMENT
-            # -------------------------------------------------
-
             if advance_payment > 0:
 
                 Payment.objects.create(
                     bill=bill,
                     amount=advance_payment,
                     payment_method=payment_method,
-
-                    # IMPORTANT:
-                    # The advance belongs to the date
-                    # on which the bill was created.
                     payment_date=bill.bill_date,
                 )
-
-            # -------------------------------------------------
-            # CREATE BILL ITEMS
-            # -------------------------------------------------
 
             for item in items:
 
@@ -325,27 +296,14 @@ def new_bill(request):
                     total=item["total"],
                 )
 
-            # -------------------------------------------------
-            # CREATE PRESCRIPTION
-            # -------------------------------------------------
-
             Prescription.objects.create(
                 bill=bill,
                 **prescription_data
             )
 
-        # -----------------------------------------------------
-        # AFTER SUCCESSFUL SAVE
-        # -----------------------------------------------------
-
-        return redirect(f"{reverse('bill_detail', args=[bill.id])}?saved=1")
-
-
-
-
-    # ---------------------------------------------------------
-    # GET REQUEST
-    # ---------------------------------------------------------
+        return redirect(
+            f"{reverse('bill_detail', args=[bill.id])}?saved=1"
+        )
 
     return render(
         request,
@@ -363,19 +321,10 @@ def new_bill(request):
 @login_required
 def bill_detail(request, bill_id):
 
-    # -----------------------------------------------------
-    # GET SHOP
-    # -----------------------------------------------------
-
     try:
         shop = request.user.shop
-
     except Shop.DoesNotExist:
         return redirect("shop_setup")
-
-    # -----------------------------------------------------
-    # GET BILL
-    # -----------------------------------------------------
 
     bill = get_object_or_404(
         Bill.objects
@@ -391,19 +340,10 @@ def bill_detail(request, bill_id):
         shop=shop
     )
 
-    # -----------------------------------------------------
-    # PRESCRIPTION
-    # -----------------------------------------------------
-
     try:
         prescription = bill.prescription
-
     except Prescription.DoesNotExist:
         prescription = None
-
-    # -----------------------------------------------------
-    # PAYMENT HISTORY
-    # -----------------------------------------------------
 
     payments = list(
         bill.payments
@@ -414,9 +354,6 @@ def bill_detail(request, bill_id):
         )
     )
 
-    # Identify the first payment as the initial advance
-    # when the bill had an advance amount.
-
     for index, payment in enumerate(payments):
 
         if (
@@ -426,24 +363,16 @@ def bill_detail(request, bill_id):
             payment.transaction_type = (
                 "Initial / Advance Payment"
             )
-
         else:
             payment.transaction_type = (
                 "Settlement Payment"
             )
-
-    # -----------------------------------------------------
-    # TOTAL PAID / REMAINING
-    # -----------------------------------------------------
 
     total_paid = sum(
         payment.amount
         for payment in payments
     ) or Decimal("0.00")
 
-    # Calculate the balance from actual payment transactions.
-    # This keeps Bill Details correct even if the stored
-    # remaining_amount value ever becomes out of sync.
     calculated_remaining = max(
         bill.grand_total - total_paid,
         Decimal("0.00")
@@ -451,18 +380,10 @@ def bill_detail(request, bill_id):
 
     payment_count = len(payments)
 
-    # -----------------------------------------------------
-    # PAYMENT STATUS
-    # -----------------------------------------------------
-
     if calculated_remaining > 0:
         payment_status = "Pending"
     else:
         payment_status = "Paid"
-
-    # -----------------------------------------------------
-    # CONTEXT
-    # -----------------------------------------------------
 
     context = {
         "bill": bill,
@@ -482,6 +403,386 @@ def bill_detail(request, bill_id):
 
 
 # =========================================================
+# EDIT BILL
+# =========================================================
+
+@login_required
+def edit_bill(request, bill_id):
+
+    try:
+        shop = request.user.shop
+    except Shop.DoesNotExist:
+        return redirect("shop_setup")
+
+    bill = get_object_or_404(
+        Bill.objects
+        .select_related("customer", "shop")
+        .prefetch_related("items", "payments"),
+        id=bill_id,
+        shop=shop
+    )
+
+    customers = shop.customers.all().order_by("name")
+
+    try:
+        prescription = bill.prescription
+    except Prescription.DoesNotExist:
+        prescription = None
+
+    payments = list(
+        bill.payments.all().order_by(
+            "payment_date",
+            "id"
+        )
+    )
+
+    total_paid = sum(
+        payment.amount
+        for payment in payments
+    ) or Decimal("0.00")
+
+    if request.method == "POST":
+
+        # -----------------------------------------------------
+        # CUSTOMER
+        # -----------------------------------------------------
+
+        customer_id = request.POST.get("customer_id")
+
+        try:
+            customer = Customer.objects.get(
+                id=customer_id,
+                shop=shop
+            )
+        except (
+            Customer.DoesNotExist,
+            ValueError,
+            TypeError
+        ):
+            return render(
+                request,
+                "billing/edit_bill.html",
+                {
+                    "bill": bill,
+                    "customers": customers,
+                    "prescription": prescription,
+                    "error": "Please select a valid customer."
+                }
+            )
+
+        # -----------------------------------------------------
+        # ITEMS
+        # -----------------------------------------------------
+
+        item_names = request.POST.getlist("item_name[]")
+        quantities = request.POST.getlist("quantity[]")
+        rates = request.POST.getlist("rate[]")
+
+        items = []
+        subtotal = Decimal("0.00")
+
+        for name, quantity, rate in zip(
+            item_names,
+            quantities,
+            rates
+        ):
+
+            name = name.strip()
+
+            if not name:
+                continue
+
+            try:
+                quantity = int(quantity)
+                rate = Decimal(rate)
+            except (
+                ValueError,
+                InvalidOperation
+            ):
+                continue
+
+            if quantity <= 0 or rate < 0:
+                continue
+
+            total = rate * quantity
+
+            subtotal += total
+
+            items.append({
+                "name": name,
+                "quantity": quantity,
+                "rate": rate,
+                "total": total,
+            })
+
+        if not items:
+            return render(
+                request,
+                "billing/edit_bill.html",
+                {
+                    "bill": bill,
+                    "customers": customers,
+                    "prescription": prescription,
+                    "error": "Please add at least one bill item."
+                }
+            )
+
+        # -----------------------------------------------------
+        # DISCOUNT
+        # -----------------------------------------------------
+
+        try:
+            discount = Decimal(
+                request.POST.get(
+                    "discount",
+                    "0"
+                ) or "0"
+            )
+        except InvalidOperation:
+            discount = Decimal("0.00")
+
+        if discount < 0:
+            discount = Decimal("0.00")
+
+        if discount > subtotal:
+            discount = subtotal
+
+        grand_total = subtotal - discount
+
+        # -----------------------------------------------------
+        # IMPORTANT PAYMENT SAFETY
+        # -----------------------------------------------------
+        # Existing payment transactions are preserved.
+        #
+        # We don't allow the new bill total to become lower
+        # than the amount already collected.
+        # -----------------------------------------------------
+
+        if grand_total < total_paid:
+
+            return render(
+                request,
+                "billing/edit_bill.html",
+                {
+                    "bill": bill,
+                    "customers": customers,
+                    "prescription": prescription,
+                    "error": (
+                        f"Grand total cannot be less than "
+                        f"₹{total_paid:.2f}, because that amount "
+                        f"has already been collected."
+                    ),
+                }
+            )
+
+        # -----------------------------------------------------
+        # PAYMENT METHOD
+        # -----------------------------------------------------
+
+        payment_method = request.POST.get(
+            "payment_method",
+            "cash"
+        )
+
+        valid_payment_methods = {
+            "cash",
+            "upi",
+            "card",
+            "other",
+        }
+
+        if payment_method not in valid_payment_methods:
+            payment_method = "cash"
+
+        # -----------------------------------------------------
+        # DELIVERY / NOTES
+        # -----------------------------------------------------
+
+        delivery_date = request.POST.get(
+            "delivery_date"
+        ) or None
+
+        notes = request.POST.get(
+            "notes",
+            ""
+        ).strip()
+
+        # -----------------------------------------------------
+        # PRESCRIPTION
+        # -----------------------------------------------------
+
+        prescription_data = {
+
+            "right_sph": request.POST.get(
+                "right_sph",
+                ""
+            ).strip(),
+
+            "right_cyl": request.POST.get(
+                "right_cyl",
+                ""
+            ).strip(),
+
+            "right_axis": request.POST.get(
+                "right_axis",
+                ""
+            ).strip(),
+
+            "right_add": request.POST.get(
+                "right_add",
+                ""
+            ).strip(),
+
+            "left_sph": request.POST.get(
+                "left_sph",
+                ""
+            ).strip(),
+
+            "left_cyl": request.POST.get(
+                "left_cyl",
+                ""
+            ).strip(),
+
+            "left_axis": request.POST.get(
+                "left_axis",
+                ""
+            ).strip(),
+
+            "left_add": request.POST.get(
+                "left_add",
+                ""
+            ).strip(),
+
+            "pd": request.POST.get(
+                "pd",
+                ""
+            ).strip(),
+        }
+
+        remaining_amount = max(
+            grand_total - total_paid,
+            Decimal("0.00")
+        )
+
+        # -----------------------------------------------------
+        # UPDATE
+        # -----------------------------------------------------
+
+        with transaction.atomic():
+
+            bill.customer = customer
+            bill.subtotal = subtotal
+            bill.discount = discount
+            bill.grand_total = grand_total
+            bill.remaining_amount = remaining_amount
+            bill.payment_method = payment_method
+            bill.delivery_date = delivery_date
+            bill.notes = notes
+
+            # Keep the original advance amount.
+            # Payment records remain untouched.
+            bill.save(
+                update_fields=[
+                    "customer",
+                    "subtotal",
+                    "discount",
+                    "grand_total",
+                    "remaining_amount",
+                    "payment_method",
+                    "delivery_date",
+                    "notes",
+                ]
+            )
+
+            # -------------------------------------------------
+            # REPLACE ITEMS
+            # -------------------------------------------------
+
+            bill.items.all().delete()
+
+            for item in items:
+
+                BillItem.objects.create(
+                    bill=bill,
+                    item_name=item["name"],
+                    quantity=item["quantity"],
+                    rate=item["rate"],
+                    total=item["total"],
+                )
+
+            # -------------------------------------------------
+            # PRESCRIPTION
+            # -------------------------------------------------
+
+            if prescription:
+
+                for field, value in prescription_data.items():
+                    setattr(
+                        prescription,
+                        field,
+                        value
+                    )
+
+                prescription.save()
+
+            else:
+
+                Prescription.objects.create(
+                    bill=bill,
+                    **prescription_data
+                )
+
+        return redirect(
+            f"{reverse('bill_detail', args=[bill.id])}?updated=1"
+        )
+
+    return render(
+        request,
+        "billing/edit_bill.html",
+        {
+            "bill": bill,
+            "customers": customers,
+            "prescription": prescription,
+            "total_paid": total_paid,
+        }
+    )
+
+
+# =========================================================
+# DELETE BILL
+# =========================================================
+
+@login_required
+def delete_bill(request, bill_id):
+
+    if request.method != "POST":
+        return redirect("bill_history")
+
+    try:
+        shop = request.user.shop
+    except Shop.DoesNotExist:
+        return redirect("shop_setup")
+
+    bill = get_object_or_404(
+        Bill,
+        id=bill_id,
+        shop=shop
+    )
+
+    with transaction.atomic():
+
+        # BillItems, Prescription and Payments use
+        # CASCADE and are deleted automatically.
+        #
+        # Customer is protected and remains in the system.
+        bill.delete()
+
+    return redirect(
+        f"{reverse('bill_history')}?deleted=1"
+    )
+
+
+# =========================================================
 # BILL HISTORY
 # =========================================================
 
@@ -490,7 +791,6 @@ def bill_history(request):
 
     try:
         shop = request.user.shop
-
     except Shop.DoesNotExist:
         return redirect("shop_setup")
 
@@ -538,10 +838,6 @@ def bill_history(request):
         ""
     ).strip()
 
-    # -----------------------------------------------------
-    # SEARCH
-    # -----------------------------------------------------
-
     if query:
 
         bills = bills.filter(
@@ -558,10 +854,6 @@ def bill_history(request):
             )
         )
 
-    # -----------------------------------------------------
-    # DATE FILTER
-    # -----------------------------------------------------
-
     if date_from:
 
         bills = bills.filter(
@@ -574,10 +866,6 @@ def bill_history(request):
             bill_date__date__lte=date_to
         )
 
-    # -----------------------------------------------------
-    # PAYMENT METHOD FILTER
-    # -----------------------------------------------------
-
     if payment_method in {
         "cash",
         "upi",
@@ -588,10 +876,6 @@ def bill_history(request):
         bills = bills.filter(
             payment_method=payment_method
         )
-
-    # -----------------------------------------------------
-    # STATUS FILTER
-    # -----------------------------------------------------
 
     if status == "paid":
 
@@ -604,10 +888,6 @@ def bill_history(request):
         bills = bills.filter(
             calculated_remaining__gt=0
         )
-
-    # -----------------------------------------------------
-    # SUMMARY
-    # -----------------------------------------------------
 
     filtered_count = bills.count()
 
@@ -625,10 +905,6 @@ def bill_history(request):
         or 0
     )
 
-    # -----------------------------------------------------
-    # PAGINATION
-    # -----------------------------------------------------
-
     paginator = Paginator(
         bills,
         12
@@ -637,10 +913,6 @@ def bill_history(request):
     page_obj = paginator.get_page(
         request.GET.get("page")
     )
-
-    # -----------------------------------------------------
-    # RENDER
-    # -----------------------------------------------------
 
     return render(
         request,
@@ -670,19 +942,10 @@ def settle_payment(request, bill_id):
     if request.method != "POST":
         return redirect("bill_history")
 
-    # -----------------------------------------------------
-    # GET SHOP
-    # -----------------------------------------------------
-
     try:
         shop = request.user.shop
-
     except Shop.DoesNotExist:
         return redirect("shop_setup")
-
-    # -----------------------------------------------------
-    # TRANSACTION
-    # -----------------------------------------------------
 
     with transaction.atomic():
 
@@ -691,10 +954,6 @@ def settle_payment(request, bill_id):
             id=bill_id,
             shop=shop,
         )
-
-        # -------------------------------------------------
-        # CALCULATE CURRENT BALANCE FROM REAL PAYMENTS
-        # -------------------------------------------------
 
         total_paid = (
             bill.payments.aggregate(
@@ -709,13 +968,16 @@ def settle_payment(request, bill_id):
         )
 
         if current_remaining <= 0:
-            bill.remaining_amount = Decimal("0.00")
-            bill.save(update_fields=["remaining_amount"])
-            return redirect("bill_history")
 
-        # -------------------------------------------------
-        # PAYMENT AMOUNT
-        # -------------------------------------------------
+            bill.remaining_amount = Decimal("0.00")
+
+            bill.save(
+                update_fields=[
+                    "remaining_amount"
+                ]
+            )
+
+            return redirect("bill_history")
 
         try:
 
@@ -729,10 +991,6 @@ def settle_payment(request, bill_id):
         except InvalidOperation:
 
             amount = Decimal("0.00")
-
-        # -------------------------------------------------
-        # PAYMENT METHOD
-        # -------------------------------------------------
 
         payment_method = request.POST.get(
             "payment_method",
@@ -749,35 +1007,17 @@ def settle_payment(request, bill_id):
         if payment_method not in valid_payment_methods:
             payment_method = "cash"
 
-        # -------------------------------------------------
-        # VALIDATE AMOUNT
-        # -------------------------------------------------
-
         if amount <= 0:
             return redirect("bill_history")
 
         if amount > current_remaining:
             return redirect("bill_history")
 
-        # -------------------------------------------------
-        # CREATE SETTLEMENT PAYMENT
-        # -------------------------------------------------
-
         Payment.objects.create(
             bill=bill,
             amount=amount,
             payment_method=payment_method,
-
-            # IMPORTANT:
-            # No payment_date is supplied here.
-            #
-            # Payment.payment_date uses timezone.now
-            # automatically.
         )
-
-        # -------------------------------------------------
-        # UPDATE REMAINING AMOUNT
-        # -------------------------------------------------
 
         bill.remaining_amount = (
             current_remaining - amount
@@ -789,26 +1029,9 @@ def settle_payment(request, bill_id):
             ]
         )
 
-    # -----------------------------------------------------
-    # SUCCESS
-    # -----------------------------------------------------
-
     return redirect(
         f"{reverse('bill_history')}?settled=1"
     )
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # =========================================================
@@ -818,18 +1041,10 @@ def settle_payment(request, bill_id):
 @login_required
 def send_whatsapp(request, bill_id):
 
-    # -----------------------------------------------------
-    # GET SHOP
-    # -----------------------------------------------------
-
     try:
         shop = request.user.shop
     except Shop.DoesNotExist:
         return redirect("shop_setup")
-
-    # -----------------------------------------------------
-    # GET BILL
-    # -----------------------------------------------------
 
     bill = get_object_or_404(
         Bill.objects
@@ -839,42 +1054,22 @@ def send_whatsapp(request, bill_id):
         shop=shop
     )
 
-    # -----------------------------------------------------
-    # CUSTOMER MOBILE
-    # -----------------------------------------------------
-
     mobile = (bill.customer.mobile or "").strip()
 
     if not mobile:
-        return redirect("bill_detail", bill_id=bill.id)
+        return redirect(
+            "bill_detail",
+            bill_id=bill.id
+        )
 
-    # -----------------------------------------------------
-    # CLEAN MOBILE NUMBER
-    # -----------------------------------------------------
-
-    # Remove spaces, +, -, brackets etc.
     mobile = "".join(
         character
         for character in mobile
         if character.isdigit()
     )
 
-    # -----------------------------------------------------
-    # INDIA NUMBER
-    # -----------------------------------------------------
-
-    # If customer number is stored as:
-    # 9876543210
-    #
-    # convert it to:
-    # 919876543210
-
     if len(mobile) == 10:
         mobile = "91" + mobile
-
-    # -----------------------------------------------------
-    # PAYMENT DETAILS
-    # -----------------------------------------------------
 
     payments = list(
         bill.payments
@@ -892,15 +1087,9 @@ def send_whatsapp(request, bill_id):
         Decimal("0.00")
     )
 
-    # -----------------------------------------------------
-    # PAYMENT METHOD
-    # -----------------------------------------------------
-
-    payment_method = bill.get_payment_method_display()
-
-    # -----------------------------------------------------
-    # BUILD ITEM LIST
-    # -----------------------------------------------------
+    payment_method = (
+        bill.get_payment_method_display()
+    )
 
     item_lines = []
 
@@ -913,21 +1102,14 @@ def send_whatsapp(request, bill_id):
 
     items_text = "\n".join(item_lines)
 
-    # -----------------------------------------------------
-    # DELIVERY DATE
-    # -----------------------------------------------------
-
     delivery_text = ""
 
     if bill.delivery_date:
+
         delivery_text = (
             f"\nDelivery Date: "
             f"{bill.delivery_date.strftime('%d %b %Y')}"
         )
-
-    # -----------------------------------------------------
-    # WHATSAPP MESSAGE
-    # -----------------------------------------------------
 
     message = (
         f"Hello {bill.customer.name} 👋\n\n"
@@ -957,24 +1139,14 @@ def send_whatsapp(request, bill_id):
         f"We appreciate your business. 🙏"
     )
 
-    # -----------------------------------------------------
-    # WHATSAPP URL
-    # -----------------------------------------------------
-
-    from urllib.parse import quote
-
     whatsapp_url = (
         f"https://wa.me/{mobile}"
         f"?text={quote(message)}"
     )
 
-    # -----------------------------------------------------
-    # OPEN WHATSAPP
-    # -----------------------------------------------------
-
-    from django.http import HttpResponseRedirect
-
-    return HttpResponseRedirect(whatsapp_url)
+    return HttpResponseRedirect(
+        whatsapp_url
+    )
 
 
 # =========================================================
@@ -983,6 +1155,7 @@ def send_whatsapp(request, bill_id):
 
 @login_required
 def settings(request):
+
     try:
         shop = request.user.shop
     except Shop.DoesNotExist:

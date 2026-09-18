@@ -46,44 +46,69 @@ Bill Details
         </div>
 
 
-        <div class="flex flex-col sm:flex-row gap-3">
+        <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
 
-            <!-- BACK -->
-
-            <a
-                href="{% url 'bill_history' %}"
-                class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-            >
-                ← Back
-            </a>
-
-
-            <!-- WHATSAPP -->
-
-            {% if bill.customer.mobile %}
-
-            <a
-                href="{% url 'send_whatsapp' bill.id %}"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition"
-            >
-                <span class="text-lg">🟢</span>
-                Send to WhatsApp
-            </a>
-
-            {% endif %}
+    <!-- BACK -->
+    <a
+        href="{% url 'bill_history' %}"
+        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+    >
+        ← Back
+    </a>
 
 
-            <!-- PRINT -->
+    <!-- EDIT -->
+    <a
+        href="{% url 'edit_bill' bill.id %}"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-500/20 hover:bg-amber-600 transition"
+    >
+        ✏️ Edit Bill
+    </a>
 
-            <button
-                type="button"
-                onclick="window.print()"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:from-indigo-600 hover:to-blue-700 transition"
-            >
-                🖨 Print Bill
-            </button>
 
-        </div>
+    <!-- DOWNLOAD -->
+    <button
+        type="button"
+        onclick="downloadBillPDF(this)"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition"
+    >
+        ⬇ Download Bill
+    </button>
+
+
+    <!-- WHATSAPP -->
+    {% if bill.customer.mobile %}
+
+    <a
+        href="{% url 'send_whatsapp' bill.id %}"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition"
+    >
+        🟢 Send to WhatsApp
+    </a>
+
+    {% endif %}
+
+
+    {% comment %} <!-- PRINT -->
+    <button
+        type="button"
+        onclick="window.print()"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 hover:from-indigo-600 hover:to-blue-700 transition"
+    >
+        🖨 Print Bill
+    </button> {% endcomment %}
+
+
+    <!-- DELETE -->
+    <button
+        type="button"
+        onclick="openDeleteBillModal()"
+        class="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 transition"
+    >
+        🗑 Delete
+    </button>
+
+</div>
 
     </div>
 
@@ -2074,9 +2099,75 @@ async function downloadBillPDF(button) {
     }
 
 }
+function openDeleteBillModal() {
+    const modal = document.getElementById("deleteBillModal");
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+}
+
+function closeDeleteBillModal() {
+    const modal = document.getElementById("deleteBillModal");
+
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+}
 
 </script>
 
 {% endif %}
+<!-- Delete Confirmation Modal -->
+<div id="deleteBillModal"
+     class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/70 p-4">
+
+    <div class="w-full max-w-md rounded-2xl bg-slate-900 border border-red-500/30 shadow-2xl">
+
+        <div class="p-6">
+
+            <div class="flex items-center gap-4 mb-5">
+                <div class="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 text-xl">
+                    🗑️
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-white">
+                        Delete Bill?
+                    </h3>
+
+                    <p class="text-sm text-slate-400">
+                        Bill {{ bill.bill_number }}
+                    </p>
+                </div>
+            </div>
+
+            <p class="text-sm leading-6 text-slate-300 mb-6">
+                Are you sure you want to delete this bill?
+                This will permanently remove the bill, items,
+                prescription and payment records.
+            </p>
+
+            <div class="flex gap-3 justify-end">
+
+                <button type="button"
+                        onclick="closeDeleteBillModal()"
+                        class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700">
+                    Cancel
+                </button>
+
+                <form method="post"
+                      action="{% url 'delete_bill' bill.id %}">
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            class="px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-500">
+                        Yes, Delete
+                    </button>
+                </form>
+
+            </div>
+
+        </div>
+    </div>
+</div>
 
 {% endblock %}
