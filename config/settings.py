@@ -251,6 +251,12 @@ LOGOUT_REDIRECT_URL = "/"
 # PRODUCTION SECURITY
 # =========================================================
 
+
+
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SAMESITE = "Lax"
+
 if not DEBUG:
     # Render terminates HTTPS and forwards the original protocol.
     SECURE_PROXY_SSL_HEADER = (
@@ -278,9 +284,11 @@ if not DEBUG:
 # CSRF TRUST
 # =========================================================
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://billing.onrender.com",
+]
+
 if render_hostname:
-    CSRF_TRUSTED_ORIGINS = [
-        f"https://{render_hostname}",
-    ]
-else:
-    CSRF_TRUSTED_ORIGINS = []
+    CSRF_TRUSTED_ORIGINS.append(
+        f"https://{render_hostname}"
+    )
